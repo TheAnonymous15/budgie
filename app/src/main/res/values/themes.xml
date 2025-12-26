@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark Navy color for splash -->
+    <color name="splash_background">#061318</color>
+
+    <style name="Theme.Budgie" parent="android:Theme.Material.Light.NoActionBar">
+        <!-- Set the window background to dark navy to prevent white flash -->
+        <item name="android:windowBackground">@color/splash_background</item>
+        <item name="android:statusBarColor">@color/splash_background</item>
+        <item name="android:navigationBarColor">@color/splash_background</item>
+    </style>
+</resources>

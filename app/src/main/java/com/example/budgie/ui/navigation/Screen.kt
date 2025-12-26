@@ -1,0 +1,23 @@
+package com.example.budgie.ui.navigation
+
+sealed class Screen(val route: String) {
+    object Onboarding : Screen("onboarding")
+    object Dashboard : Screen("dashboard")
+    object Expenses : Screen("expenses")
+    object Income : Screen("income")
+    object Bills : Screen("bills")
+    object Budget : Screen("budget")
+    object Insights : Screen("insights")
+    object Investments : Screen("investments")
+    object WealthProjection : Screen("wealth_projection")
+    object Settings : Screen("settings")
+    object AddExpense : Screen("add_expense")
+    object AddIncome : Screen("add_income")
+    object AddBill : Screen("add_bill")
+    object AddBudget : Screen("add_budget")
+    object Export : Screen("export")
+    object Goals : Screen("goals")
+    object Loans : Screen("loans")
+    object ShoppingList : Screen("shopping_list")
+    object AIChat : Screen("ai_chat")
+}

@@ -1,60 +1,156 @@
-# 💰 Budgie - Personal Finance Management App
+# 💰 Budgie - AI-Powered Personal Finance Management
 
 <div align="center">
 
-![Android](https://img.shields.io/badge/Platform-Android-green.svg)
-![Kotlin](https://img.shields.io/badge/Language-Kotlin-blue.svg)
-![Jetpack Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-purple.svg)
-![Min SDK](https://img.shields.io/badge/Min%20SDK-24-orange.svg)
+<img src="app/src/main/res/mipmap-xxxhdpi/ic_launcher_round.png" alt="Budgie Logo" width="120" height="120">
+
+![Android](https://img.shields.io/badge/Platform-Android-3DDC84.svg?logo=android&logoColor=white)
+![Kotlin](https://img.shields.io/badge/Language-Kotlin%202.0-7F52FF.svg?logo=kotlin&logoColor=white)
+![Jetpack Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4.svg?logo=jetpack-compose&logoColor=white)
+![Min SDK](https://img.shields.io/badge/Min%20SDK-26-orange.svg)
 ![Target SDK](https://img.shields.io/badge/Target%20SDK-34-brightgreen.svg)
-![Build](https://img.shields.io/badge/Build-Passing-success.svg)
+![License](https://img.shields.io/badge/License-Private-red.svg)
+![AI Powered](https://img.shields.io/badge/AI-On--Device%20ML-purple.svg)
 
-**A modern, feature-rich Android application for managing personal finances**
+**Your Financial Bestie - A comprehensive, privacy-first Android finance app with on-device AI**
 
-[Features](#-features) • [Tech Stack](#-tech-stack) • [Getting Started](#-getting-started) • [Documentation](#-documentation) • [Architecture](#-architecture)
+[Features](#-features) • [AI Engine](#-ai-engine) • [Screenshots](#-screenshots) • [Tech Stack](#-tech-stack) • [Getting Started](#-getting-started) • [Architecture](#-architecture) • [Security](#-security)
+
+---
+
+### 🎯 Overview
+
+**Budgie** is a modern, feature-rich personal finance management application built with cutting-edge Android technologies. It combines intuitive expense tracking with powerful on-device AI/ML capabilities to provide personalized financial insights, spending predictions, and smart recommendations—all while keeping your data completely private on your device.
 
 </div>
 
 ---
 
-## 📱 Overview
+## ✨ Features
 
-**Budgie** is a comprehensive personal finance management application built with the latest Android development technologies. Track expenses, manage budgets, monitor bills, and gain insights into your financial health—all while keeping your data private and secure on your device.
-
-### ✨ Highlights
-
-- 🎨 **Modern UI** - Built with Jetpack Compose and Material Design 3
-- 📊 **Comprehensive Tracking** - Expenses, income, budgets, and bills
-- 📈 **Smart Insights** - AI-powered financial advice and trend analysis
-- 🔒 **Privacy First** - All data stored locally, no internet required
-- 🌙 **Theme Support** - Beautiful dark and light themes
-- ⚡ **Fast & Responsive** - Smooth animations and instant feedback
-
----
-
-## 🎯 Features
-
-### Core Functionality
+### 💸 Core Financial Management
 
 | Feature | Description |
 |---------|-------------|
-| 💸 **Expense Tracking** | Record and categorize all your spending with detailed history |
-| 💵 **Income Management** | Track multiple income sources and view trends |
-| 📊 **Budget Planning** | Create custom budgets with category-wise limits and monitoring |
-| 📅 **Bill Reminders** | Never miss a payment with recurring bill tracking |
-| 📈 **Financial Insights** | Visual analytics, charts, and spending patterns |
-| 💎 **Investment Tracking** | Monitor your investment portfolio and returns |
-| 🔮 **Wealth Projection** | Plan your financial future with smart projections |
-| 🤖 **AI Financial Advisor** | Get personalized financial advice and recommendations |
+| **Expense Tracking** | Record and categorize expenses with multi-item entry support and variable utility calculations |
+| **Income Management** | Track multiple income sources (salary, freelance, investments, etc.) with recurring income support |
+| **Budget Planning** | Create monthly/yearly budgets by category with progress tracking and overspend alerts |
+| **Bill Management** | Never miss a payment with smart bill reminders and payment tracking |
+| **Financial Goals** | Set short/medium/long-term goals with saving or loan funding options |
+| **Loan Tracking** | Manage loans with interest calculations (flat rate, reducing balance, no interest) |
+| **Shopping Lists** | AI-powered shopping list analysis with smart recommendations |
 
-### User Experience
+### 🤖 AI-Powered Insights
 
-- ✅ Intuitive navigation with bottom navigation bar
-- ✅ Quick add buttons for common actions
-- ✅ Swipe gestures for efficient data management
-- ✅ Search and filter across all transactions
-- ✅ Export data for backup and analysis
-- ✅ Customizable categories and tags
+| Feature | Description |
+|---------|-------------|
+| **Behavior Learning** | On-device ML learns your spending patterns and habits |
+| **Anomaly Detection** | Automatically flags unusual transactions |
+| **Spending Predictions** | Forecasts future spending based on historical data |
+| **Smart Recommendations** | Personalized financial advice based on your behavior |
+| **Risk Assessment** | Evaluates your financial health and stability |
+| **Goal Probability** | Calculates likelihood of achieving financial goals |
+| **AI Chat Assistant** | Conversational AI for financial queries about your data |
+
+### 📊 Analytics & Reporting
+
+| Feature | Description |
+|---------|-------------|
+| **Expenditure Overview** | Daily, weekly, monthly, and annual spending views |
+| **Spending Trends** | Visual charts showing spending patterns over time |
+| **Category Breakdown** | Pie charts and analysis by expense category |
+| **PDF/Excel Export** | Professional reports with colored tables and charts |
+| **Wealth Projection** | Long-term financial forecasting |
+| **Investment Tracking** | Monitor portfolio and calculate returns |
+
+### 🔐 Security & Privacy
+
+| Feature | Description |
+|---------|-------------|
+| **PIN Protection** | 5-digit PIN with weak PIN detection |
+| **Biometric Auth** | Fingerprint and facial recognition support |
+| **Encrypted Storage** | All sensitive data encrypted with AES-256 |
+| **100% Offline** | No data ever leaves your device |
+| **Session Management** | Auto-lock on app exit |
+
+### 🎉 User Experience
+
+| Feature | Description |
+|---------|-------------|
+| **Onboarding** | Beautiful glassmorphic onboarding with birthday capture |
+| **Birthday Celebrations** | Personalized birthday page with balloons and music |
+| **Smart Notifications** | Morning greetings, evening reminders, bill alerts |
+| **Seasonal Messages** | Holiday-specific insights (Christmas, New Year, etc.) |
+| **Dark Theme** | Premium navy + emerald color scheme |
+| **Animated Splash** | Professional animated splash screen |
+
+---
+
+## 🧠 AI Engine
+
+Budgie features a sophisticated **fully offline AI/ML pipeline** that runs entirely on-device:
+
+### Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    BUDGIE AI PIPELINE                           │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌─────────────┐    ┌──────────────┐    ┌──────────────────┐   │
+│  │   Feature   │───▶│   Behavior   │───▶│     Anomaly      │   │
+│  │ Engineering │    │  Clustering  │    │    Detection     │   │
+│  └─────────────┘    └──────────────┘    └──────────────────┘   │
+│         │                  │                     │              │
+│         ▼                  ▼                     ▼              │
+│  ┌─────────────┐    ┌──────────────┐    ┌──────────────────┐   │
+│  │ Time Series │───▶│   Pattern    │───▶│      Risk        │   │
+│  │ Forecasting │    │ Recognition  │    │   Assessment     │   │
+│  └─────────────┘    └──────────────┘    └──────────────────┘   │
+│                             │                                   │
+│                             ▼                                   │
+│                    ┌──────────────────┐                        │
+│                    │  Insight/NLG     │                        │
+│                    │   Generation     │                        │
+│                    └──────────────────┘                        │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### ML Components
+
+| Component | Model/Algorithm | Purpose |
+|-----------|-----------------|---------|
+| **Feature Extractor** | Rule-based | Transforms raw transactions into learnable signals |
+| **Behavior Clusterer** | K-Means | Groups similar spending patterns (Saver, Spender, etc.) |
+| **Anomaly Detector** | Z-Score + Rolling Stats | Detects unusual transactions |
+| **Time Series Predictor** | ARIMA-like | Forecasts future spending |
+| **Pattern Recognizer** | Heuristics + FFT | Identifies recurring expenses and pay cycles |
+| **Risk Assessor** | Rule Engine | Evaluates financial health |
+| **NLG Generator** | Template-based | Generates human-readable insights |
+
+### Conversational AI
+
+The AI Chat Assistant uses:
+- **Intent Classification** - Understands what you're asking
+- **Entity Extraction** - Extracts dates, amounts, categories
+- **Context Memory** - Remembers conversation context
+- **Financial Knowledge Base** - Trained on your spending data
+
+---
+
+## 📱 Screenshots
+
+| Splash Screen | Onboarding | Dashboard |
+|:-------------:|:----------:|:---------:|
+| Animated logo with rotating rings | Glassmorphic design with birthday capture | Financial overview with AI insights |
+
+| Goals | Loans | AI Chat |
+|:-----:|:-----:|:-------:|
+| Track saving goals with progress | Loan management with calculations | Chat with your financial AI |
+
+| Insights | Export | Lock Screen |
+|:--------:|:------:|:-----------:|
+| AI-powered financial insights | Professional PDF/Excel reports | Biometric + PIN security |
 
 ---
 
@@ -62,41 +158,126 @@
 
 ### Core Technologies
 
-- **Language**: Kotlin 2.0.21
-- **UI Framework**: Jetpack Compose (Material3)
-- **Architecture**: MVVM (Model-View-ViewModel)
-- **Database**: Room Database 2.6.1
-- **Async**: Kotlin Coroutines 1.7.3
-- **Navigation**: Navigation Compose 2.7.7
-- **Build System**: Gradle with Kotlin DSL
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **Kotlin** | 2.0.21 | Primary programming language |
+| **Jetpack Compose** | BOM 2024.09.00 | Modern declarative UI |
+| **Material Design 3** | Latest | UI components and theming |
+| **Room Database** | 2.6.1 | Local data persistence |
+| **Kotlin Coroutines** | 1.7.3 | Asynchronous programming |
+| **Navigation Compose** | 2.7.7 | Screen navigation |
 
-### Libraries & Dependencies
+### AI/ML Stack
 
-```kotlin
-// UI & Design
-Jetpack Compose (BOM 2024.09.00)
-Material Design 3
-Material Icons Extended
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **TensorFlow Lite** | 2.14.0 | On-device ML inference |
+| **TensorFlow Lite Support** | 0.4.4 | ML utilities |
+| **MediaPipe** | 0.10.11 | Generative AI tasks |
+| **Apache Commons Math** | 3.6.1 | Statistical computations |
 
-// Database & Storage
-Room Database
-DataStore Preferences
+### Security
 
-// Lifecycle & Architecture
-ViewModel
-LiveData
-Lifecycle Extensions
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **Biometric API** | 1.1.0 | Fingerprint/Face authentication |
+| **Security Crypto** | 1.1.0-alpha06 | AES-256 encrypted storage |
 
-// Utilities
-Gson (JSON serialization)
-Kotlin Coroutines
+### Export & Reporting
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **iText7** | 7.2.5 | Professional PDF generation |
+| **Apache POI** | 5.2.3 | Excel file generation |
+
+### Utilities
+
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| **Gson** | Latest | JSON serialization |
+| **Kotlinx Serialization** | 1.6.0 | Kotlin-native serialization |
+| **WorkManager** | 2.9.0 | Background task scheduling |
+| **DataStore** | Latest | Preferences storage |
+
+---
+
+## 📁 Project Structure
+
 ```
-
-### Development Tools
-
-- **KSP** (Kotlin Symbol Processing) - Faster annotation processing
-- **Gradle Version Catalogs** - Centralized dependency management
-- **ProGuard** - Code optimization for release builds
+app/src/main/java/com/example/budgie/
+├── MainActivity.kt                 # Entry point
+├── ai/                            # AI/ML Components
+│   ├── AIModels.kt               # AI data models
+│   ├── ConversationalAI.kt       # Chat assistant engine
+│   ├── FinancialAIEngine.kt      # Main AI orchestrator
+│   ├── FinancialAdvisor.kt       # Financial advice generator
+│   ├── ShoppingListAnalyzer.kt   # Shopping AI analyzer
+│   ├── conversational/           # Chat components
+│   ├── ml/                       # ML Models
+│   │   ├── BehaviorLearningEngine.kt   # Learning engine (1335 lines)
+│   │   ├── BudgetOptimizer.kt          # Budget optimization
+│   │   ├── OnDeviceAIEngine.kt         # On-device ML
+│   │   └── TFLiteSpendingPredictor.kt  # TensorFlow predictions
+│   └── pipeline/                 # AI pipeline components
+├── data/                         # Data Layer
+│   ├── local/                    # Room database
+│   │   ├── BudgieDatabase.kt    # Database configuration
+│   │   ├── ExpenseDao.kt        # Expense operations
+│   │   ├── IncomeDao.kt         # Income operations
+│   │   ├── BillDao.kt           # Bill operations
+│   │   ├── BudgetDao.kt         # Budget operations
+│   │   ├── GoalDao.kt           # Goal operations
+│   │   ├── LoanDao.kt           # Loan operations
+│   │   └── ShoppingDao.kt       # Shopping list operations
+│   ├── model/                   # Data models
+│   │   ├── Expense.kt           # Expense entity
+│   │   ├── Income.kt            # Income entity
+│   │   ├── Bill.kt              # Bill entity
+│   │   ├── Budget.kt            # Budget entity
+│   │   ├── GoalModels.kt        # Financial goals
+│   │   ├── LoanModels.kt        # Loan entities
+│   │   ├── ShoppingModels.kt    # Shopping list entities
+│   │   ├── FinancialModels.kt   # Summary models
+│   │   ├── UserProfile.kt       # User data
+│   │   └── UtilityReading.kt    # Utility meter readings
+│   ├── preferences/             # DataStore preferences
+│   └── repository/              # Data repositories
+├── notifications/               # Notification System
+│   ├── NotificationHelper.kt   # Notification creation
+│   └── NotificationWorkers.kt  # Background workers
+├── security/                    # Security
+│   └── SecurityManager.kt      # PIN/Biometric auth
+├── ui/                         # UI Layer
+│   ├── components/             # Reusable components
+│   │   ├── AIDashboardCard.kt  # AI insights card
+│   │   ├── CommonComponents.kt # Shared components
+│   │   └── ExpenditureChart.kt # Chart components
+│   ├── navigation/             # Navigation
+│   │   └── BudgieNavigation.kt # Nav graph
+│   ├── screens/                # App screens (17 screens)
+│   │   ├── AIChatScreen.kt     # AI chat interface
+│   │   ├── BillsScreen.kt      # Bill management
+│   │   ├── BirthdayCelebrationScreen.kt
+│   │   ├── BudgetScreen.kt     # Budget planning
+│   │   ├── DashboardScreen.kt  # Main dashboard
+│   │   ├── DashboardComponents.kt
+│   │   ├── DashboardDialogs.kt
+│   │   ├── ExpenseIncomeScreens.kt
+│   │   ├── ExportScreen.kt     # Data export
+│   │   ├── GoalsScreen.kt      # Financial goals
+│   │   ├── InsightsInvestmentsScreen.kt
+│   │   ├── LoansScreen.kt      # Loan management
+│   │   ├── LockScreen.kt       # Security screen
+│   │   ├── OnboardingScreen.kt # User onboarding
+│   │   ├── ShoppingListScreen.kt
+│   │   ├── SplashScreen.kt     # Animated splash
+│   │   └── WealthProjectionScreen.kt
+│   ├── theme/                  # Material theming
+│   └── viewmodel/              # ViewModels
+│       └── MainViewModel.kt    # App-wide ViewModel
+└── util/                       # Utilities
+    └── ExportManager.kt        # PDF/Excel export (1117 lines)
+```
 
 ---
 
@@ -104,352 +285,186 @@ Kotlin Coroutines
 
 ### Prerequisites
 
-- **Android Studio**: Hedgehog (2023.1.1) or newer
-- **JDK**: 11 or higher
-- **Android SDK**: API 24-34
-- **Gradle**: 8.13.2 (included via wrapper)
-- **Physical Device**: Android 7.0+ or Emulator
+- **Android Studio** Hedgehog (2023.1.1) or newer
+- **JDK 11** or higher
+- **Android SDK** 34
+- **Kotlin** 2.0.21
+- Physical Android device or emulator (API 26+)
 
-### Quick Start
+### Installation
 
-1. **Clone or Download the Project**
-   ```bash
-   # Already downloaded to:
-   /Users/danielkinyua/Downloads/projects/budgie
-   ```
+1. **Clone the repository**
+```bash
+git clone https://github.com/yourusername/budgie.git
+cd budgie
+```
 
 2. **Open in Android Studio**
-   - Launch Android Studio
-   - Select "Open"
-   - Navigate to the budgie folder
-   - Wait for Gradle sync to complete
-
-3. **Connect Your Device**
-   - Enable Developer Options (tap Build Number 7 times)
-   - Enable USB Debugging
-   - Connect via USB and accept authorization
-
-4. **Run the App**
-   - Select your device from the dropdown
-   - Click the Run button (▶️)
-   - App will build, install, and launch automatically
-
-### Alternative: Command Line Installation
-
 ```bash
-cd /Users/danielkinyua/Downloads/projects/budgie
+# Or open Android Studio and select "Open Project"
+open -a "Android Studio" .
+```
 
-# Build and install
+3. **Sync Gradle**
+   - Android Studio will automatically sync dependencies
+   - If not, click `File → Sync Project with Gradle Files`
+
+4. **Run on Device**
+```bash
+# Using Gradle
 ./gradlew installDebug
 
-# Launch the app
-/Users/danielkinyua/Library/Android/sdk/platform-tools/adb shell am start -n com.example.budgie/.MainActivity
+# Or use Android Studio's Run button
 ```
 
-### Using the Dev Commands Script
+### Quick Build Commands
 
 ```bash
-cd /Users/danielkinyua/Downloads/projects/budgie
-./dev-commands.sh
+# Clean build
+./gradlew clean assembleDebug
+
+# Install on connected device
+./gradlew installDebug
+
+# Run tests
+./gradlew test
+
+# Generate release APK
+./gradlew assembleRelease
 ```
-
-This interactive script provides quick access to:
-- Device management
-- Building and installing
-- Logging and debugging
-- Screenshots and more
-
----
-
-## 📚 Documentation
-
-Comprehensive guides are available in the project:
-
-| Document | Description |
-|----------|-------------|
-| **[QUICK_START.md](QUICK_START.md)** | Quick reference and 3-step setup guide |
-| **[RUNNING_ON_DEVICE.md](RUNNING_ON_DEVICE.md)** | Detailed device setup and troubleshooting |
-| **[dev-commands.sh](dev-commands.sh)** | Interactive development commands script |
 
 ---
 
 ## 🏗 Architecture
 
-### MVVM Pattern
+Budgie follows the **MVVM (Model-View-ViewModel)** architecture pattern with clean separation of concerns:
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                    UI Layer                         │
-│  ┌─────────────┐  ┌─────────────┐  ┌────────────┐ │
-│  │  Screens    │  │ Components  │  │   Theme    │ │
-│  └─────────────┘  └─────────────┘  └────────────┘ │
-└────────────────────┬────────────────────────────────┘
-                     │
-┌────────────────────▼────────────────────────────────┐
-│                ViewModel Layer                      │
-│  ┌──────────────────────────────────────────────┐  │
-│  │         MainViewModel                         │  │
-│  │  (Business Logic & State Management)         │  │
-│  └──────────────────────────────────────────────┘  │
-└────────────────────┬────────────────────────────────┘
-                     │
-┌────────────────────▼────────────────────────────────┐
-│                 Data Layer                          │
-│  ┌──────────────┐  ┌─────────────┐  ┌───────────┐ │
-│  │ Repository   │  │  Database   │  │   DAOs    │ │
-│  └──────────────┘  └─────────────┘  └───────────┘ │
-│  ┌──────────────────────────────────────────────┐  │
-│  │         Data Models (Entities)               │  │
-│  └──────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────┐
+│                         UI LAYER                                │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │               Jetpack Compose Screens                    │   │
+│  │  (Dashboard, Expenses, Goals, Loans, AI Chat, etc.)     │   │
+│  └────────────────────────┬────────────────────────────────┘   │
+│                           │                                     │
+│  ┌────────────────────────▼────────────────────────────────┐   │
+│  │                    MainViewModel                         │   │
+│  │          (StateFlow, Coroutines, LiveData)              │   │
+│  └────────────────────────┬────────────────────────────────┘   │
+├───────────────────────────┼─────────────────────────────────────┤
+│                     DATA LAYER                                  │
+│  ┌────────────────────────▼────────────────────────────────┐   │
+│  │                   Repository                             │   │
+│  │            (Single source of truth)                      │   │
+│  └──────┬─────────────────┬─────────────────┬──────────────┘   │
+│         │                 │                 │                   │
+│  ┌──────▼──────┐   ┌──────▼──────┐   ┌──────▼──────┐          │
+│  │    Room     │   │  DataStore  │   │   AI/ML    │          │
+│  │  Database   │   │ Preferences │   │   Engine   │          │
+│  └─────────────┘   └─────────────┘   └─────────────┘          │
+└─────────────────────────────────────────────────────────────────┘
 ```
 
-### Project Structure
+### Key Architectural Decisions
 
-```
-com.example.budgie/
-├── MainActivity.kt                 # App entry point
-├── data/
-│   ├── model/                     # Data entities
-│   │   ├── Expense.kt
-│   │   ├── Income.kt
-│   │   ├── Budget.kt
-│   │   └── Bill.kt
-│   ├── local/                     # Room Database
-│   │   ├── BudgieDatabase.kt
-│   │   ├── ExpenseDao.kt
-│   │   ├── IncomeDao.kt
-│   │   ├── BudgetDao.kt
-│   │   └── BillDao.kt
-│   └── repository/
-│       └── FinanceRepository.kt   # Data operations
-├── ui/
-│   ├── screens/                   # Compose screens
-│   │   ├── DashboardScreen.kt
-│   │   ├── ExpenseIncomeScreens.kt
-│   │   ├── BudgetScreen.kt
-│   │   ├── BillsScreen.kt
-│   │   ├── InsightsInvestmentsScreen.kt
-│   │   └── WealthProjectionScreen.kt
-│   ├── navigation/
-│   │   ├── Screen.kt              # Route definitions
-│   │   └── BudgieNavigation.kt    # Navigation graph
-│   ├── viewmodel/
-│   │   └── MainViewModel.kt       # App state & logic
-│   ├── components/
-│   │   └── CommonComponents.kt    # Reusable UI
-│   └── theme/                     # Material3 theme
-│       ├── Color.kt
-│       ├── Theme.kt
-│       └── Type.kt
-└── ai/
-    └── FinancialAdvisor.kt        # AI insights
-```
+1. **Single Activity** - Navigation Compose handles all screen transitions
+2. **StateFlow** - Reactive state management with Kotlin Flow
+3. **Repository Pattern** - Abstracts data sources from UI
+4. **Dependency Injection** - Manual DI for simplicity
+5. **Offline-First** - All data stored locally with Room
+6. **Privacy by Design** - No network requests, no tracking
 
 ---
 
-## 💾 Database Schema
+## 🔒 Security
 
-### Tables
+### Data Protection
 
-**expenses**
-- id (PrimaryKey)
-- amount (Double)
-- category (String)
-- description (String)
-- date (Long)
-- type (String)
+- **Encrypted Preferences** - Using `EncryptedSharedPreferences` with AES-256-GCM
+- **PIN Hashing** - SHA-256 hashed PINs, never stored in plain text
+- **Biometric** - Hardware-backed biometric authentication
+- **Session Lock** - App locks when backgrounded
 
-**income**
-- id (PrimaryKey)
-- amount (Double)
-- source (String)
-- description (String)
-- date (Long)
-- type (String)
+### Privacy Principles
 
-**budgets**
-- id (PrimaryKey)
-- category (String)
-- limit (Double)
-- period (String)
-- startDate (Long)
-- endDate (Long)
-
-**bills**
-- id (PrimaryKey)
-- name (String)
-- amount (Double)
-- dueDate (Long)
-- recurring (Boolean)
-- category (String)
-- paid (Boolean)
+1. **No Internet Permission** - App works 100% offline
+2. **No Analytics** - Zero tracking or telemetry
+3. **No Cloud Sync** - Data never leaves your device
+4. **User-Controlled Export** - Only you can export your data
+5. **Encrypted Exports** - Optional PIN protection on PDF exports
 
 ---
 
-## 🔧 Build Configuration
+## 📄 Data Export
 
-```kotlin
-android {
-    compileSdk = 34
-    
-    defaultConfig {
-        applicationId = "com.example.budgie"
-        minSdk = 24
-        targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
-    }
-    
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
-    }
-}
-```
+Budgie supports professional data export in two formats:
+
+### PDF Export
+- 📊 Colored tables with professional styling
+- 🎨 Branded header with user name and date
+- 📑 Sections: Income, Expenses, Bills, Loans, Goals, Shopping Lists
+- 🔐 Optional PIN protection
+- 📁 Stored in Documents folder
+
+### Excel Export
+- 📈 Multi-sheet workbook
+- 🔢 Formatted cells and headers
+- 📊 Ready for further analysis
+- 📁 `.xlsx` format compatible with Excel, Google Sheets
 
 ---
 
-## 🧪 Testing
+## 🔔 Notifications
 
-### Running Tests
+Budgie features an intelligent notification system:
 
-```bash
-# Unit tests
-./gradlew test
-
-# Instrumented tests
-./gradlew connectedAndroidTest
-
-# Specific test
-./gradlew test --tests "com.example.budgie.ExampleUnitTest"
-```
-
-### Test Coverage
-
-- Unit tests for ViewModels
-- Repository tests
-- Database tests
-- UI tests with Compose Testing
-
----
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-**Device not detected**
-```bash
-/Users/danielkinyua/Library/Android/sdk/platform-tools/adb kill-server
-/Users/danielkinyua/Library/Android/sdk/platform-tools/adb start-server
-/Users/danielkinyua/Library/Android/sdk/platform-tools/adb devices
-```
-
-**Build fails**
-```bash
-./gradlew clean build --stacktrace
-```
-
-**App crashes**
-```bash
-/Users/danielkinyua/Library/Android/sdk/platform-tools/adb logcat | grep -E "(budgie|AndroidRuntime)"
-```
-
-For more troubleshooting, see [RUNNING_ON_DEVICE.md](RUNNING_ON_DEVICE.md).
-
----
-
-## 📊 Current Status
-
-- ✅ **Build Status**: Passing
-- ✅ **All Features**: Implemented
-- ✅ **Database**: Configured and working
-- ✅ **Navigation**: Complete
-- ✅ **UI**: Material3 compliant
-- ⚠️ **Warnings**: Minor deprecations (non-critical)
-
----
-
-## 🎨 Screenshots
-
-The app includes these major screens:
-1. Dashboard - Financial overview
-2. Expenses - Spending tracker
-3. Income - Revenue tracking
-4. Budget - Budget management
-5. Bills - Payment reminders
-6. Insights - Analytics
-7. Wealth Projection - Future planning
-
----
-
-## 🔐 Privacy & Security
-
-- ✅ **Offline First**: No internet required
-- ✅ **Local Storage**: All data stays on device
-- ✅ **No Analytics**: No tracking or telemetry
-- ✅ **No Ads**: Clean, ad-free experience
-- ✅ **Open Source**: Transparent codebase
-
----
-
-## 🚦 Roadmap
-
-Future enhancements could include:
-- [ ] Cloud backup and sync
-- [ ] Multi-currency support
-- [ ] Export to CSV/PDF
-- [ ] Biometric authentication
-- [ ] Widget support
-- [ ] Wear OS companion app
-- [ ] Share financial reports
+| Type | Schedule | Content |
+|------|----------|---------|
+| **Morning Greeting** | 8:00 AM | Personalized good morning + insight |
+| **Evening Reminder** | 7:00 PM | Expense tracking reminder |
+| **Bill Reminder** | 2 days before | Upcoming bill alerts |
+| **Weekly Summary** | Sunday | Weekly spending summary |
+| **Monthly Report** | 1st of month | Monthly financial review |
+| **Birthday** | User's birthday | Celebration with balloons & music |
+| **Seasonal** | Holidays | Christmas, New Year insights |
 
 ---
 
 ## 🤝 Contributing
 
-This project follows Android best practices:
-- Kotlin coding conventions
-- Material Design guidelines
-- MVVM architecture pattern
-- Jetpack Compose patterns
-- Clean code principles
+While this is currently a private project, contributions may be welcome in the future:
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit changes (`git commit -m 'Add AmazingFeature'`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 ---
 
-## 📄 License
+## 📝 License
 
-This project is for educational and personal use.
+This project is proprietary and confidential. All rights reserved.
 
 ---
 
 ## 🙏 Acknowledgments
 
-Built with:
-- Android Jetpack libraries
-- Material Design 3
-- Kotlin Coroutines
-- Room Database
-- Jetpack Compose
-
----
-
-## 📞 Support
-
-For issues or questions:
-1. Check the documentation files
-2. Review the troubleshooting section
-3. Check Android Studio's Event Log
-4. Enable verbose logging for detailed errors
+- **Material Design 3** - Google's design system
+- **Jetpack Compose** - Modern Android UI toolkit
+- **TensorFlow Lite** - On-device machine learning
+- **iText7** - PDF generation
+- **Apache POI** - Excel generation
 
 ---
 
 <div align="center">
 
-**Made with ❤️ using Kotlin and Jetpack Compose**
+**Built with ❤️ using Kotlin & Jetpack Compose**
 
-[⬆ Back to Top](#-budgie---personal-finance-management-app)
+**Budgie** - *Your Financial Bestie* 🐦💰
+
+*100% Private • AI-Powered • Offline-First*
 
 </div>
 
-# budgie
