@@ -2,13 +2,58 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Internet for live exchange rates -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <!-- Notification Permission for Android 13+ -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Vibration for notifications -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- Biometric Authentication (fingerprint, face, iris) -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+    <uses-permission android:name="android.permission.USE_FINGERPRINT" />
 
     <!-- For scheduling notifications -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
     <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+
+    <!-- Phone state and number for auto-filling M-Pesa phone number -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.READ_PHONE_NUMBERS" />
+
+    <!-- Query packages permission for Android 11+ to find M-Pesa app -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
+
+    <!-- Package visibility for M-Pesa and other payment apps (Android 11+) -->
+    <queries>
+        <!-- M-Pesa Super App -->
+        <package android:name="com.safaricom.mpesa.lifestyle" />
+        <!-- MySafaricom App -->
+        <package android:name="com.safaricom.mysafaricom" />
+        <!-- Alternative M-Pesa packages -->
+        <package android:name="ke.co.safaricom.mpesa" />
+        <package android:name="com.safaricom" />
+        <!-- Airtel Money -->
+        <package android:name="com.airtel.africa.selfcare" />
+        <!-- T-Kash -->
+        <package android:name="com.telkom.tkash" />
+        <!-- SIM Toolkit packages for various manufacturers -->
+        <package android:name="com.android.stk" />
+        <package android:name="com.android.stk2" />
+        <package android:name="com.mediatek.stk" />
+        <package android:name="com.qualcomm.qti.simkit" />
+        <package android:name="com.samsung.android.stk" />
+        <package android:name="com.huawei.stk" />
+        <package android:name="com.oppo.stk" />
+        <package android:name="com.vivo.stk" />
+        <package android:name="com.xiaomi.stk" />
+        <package android:name="com.android.simkit" />
+    </queries>
 
     <application
         android:allowBackup="true"

@@ -10,6 +10,9 @@ interface ExpenseDao {
     @Query("SELECT * FROM expenses ORDER BY date DESC")
     fun getAllExpenses(): Flow<List<Expense>>
 
+    @Query("SELECT * FROM expenses ORDER BY date DESC")
+    suspend fun getAllExpensesOnce(): List<Expense>
+
     @Query("SELECT * FROM expenses WHERE date >= :startDate AND date <= :endDate ORDER BY date DESC")
     fun getExpensesByDateRange(startDate: Long, endDate: Long): Flow<List<Expense>>
 
@@ -36,6 +39,9 @@ interface ExpenseDao {
 
     @Query("DELETE FROM expenses WHERE id = :id")
     suspend fun deleteExpenseById(id: Long)
+
+    @Query("DELETE FROM expenses")
+    suspend fun deleteAll()
 
     @Query("SELECT category, SUM(amount) as total FROM expenses WHERE date >= :startDate AND date <= :endDate GROUP BY category")
     fun getExpenseSumByCategory(startDate: Long, endDate: Long): Flow<List<CategorySum>>

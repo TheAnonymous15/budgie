@@ -3,8 +3,10 @@ package com.example.budgie.ui.screens
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -29,14 +31,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.budgie.ui.viewmodel.MainViewModel
-import com.example.budgie.ai.conversational.*
-import com.example.budgie.data.model.ExpenseCategory
-import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.onEach
+import com.example.budgie.ai.ConversationalAI
+import com.example.budgie.ai.ChatResponse
 import kotlinx.coroutines.launch
 import java.util.*
+
+/**
+ * AI Chat Screen - Uses Learner Engine Data
+ *
+ * Architecture (from ai.txt):
+ * - Chatbot does NOT generate its own data
+ * - Uses structured data from FinancialLearnerEngine
+ * - Shows suggested question chips
+ * - Friendly, max 3 bullets, emojis sparingly
+ * - 100% private - all on device
+ */
 
 // Theme colors
 private val WealthNavy = Color(0xFF0B1F2A)
@@ -54,7 +65,7 @@ data class ChatMessage(
     val isUser: Boolean,
     val timestamp: Long = System.currentTimeMillis(),
     val suggestions: List<String> = emptyList(),
-    val intent: UserIntent? = null
+    val isStreaming: Boolean = false
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -64,156 +75,192 @@ fun AIChatScreen(
     onBack: () -> Unit
 ) {
     val context = LocalContext.current
+
     val expenses by viewModel.expenses.collectAsState()
     val incomes by viewModel.incomes.collectAsState()
     val summary by viewModel.financialSummary.collectAsState()
-    val currentExpenses by viewModel.currentMonthExpenses.collectAsState()
 
-    // Initialize Conversational AI
-    val conversationalAI = remember { ConversationalAI(context) }
-
-    // Create Financial Data Provider
-    val financialDataProvider = remember(expenses, incomes, summary) {
-        object : FinancialDataProvider {
-            override fun getTotalExpenses(): Double = summary.totalExpenses
-            override fun getTotalIncome(): Double = summary.totalIncome
-            override fun getNetSavings(): Double = summary.netSavings
-            override fun getSavingsRate(): Double = summary.savingsRate
-
-            override fun getExpensesByCategory(): Map<String, Double> {
-                return expenses.groupBy { it.category.displayName }
-                    .mapValues { it.value.sumOf { exp -> exp.amount } }
-            }
-
-            override fun getTopSpendingCategory(): Pair<String, Double>? {
-                return getExpensesByCategory().maxByOrNull { it.value }?.toPair()
-            }
-
-            override fun getExpenseCount(): Int = expenses.size
-
-            override fun getRecentExpenses(limit: Int): List<Any> {
-                return expenses.sortedByDescending { it.date }.take(limit)
-            }
-
-            override fun getMonthlyTrend(): Map<String, Double> {
-                val calendar = Calendar.getInstance()
-                return expenses.groupBy {
-                    calendar.timeInMillis = it.date
-                    "${calendar.get(Calendar.YEAR)}-${calendar.get(Calendar.MONTH) + 1}"
-                }.mapValues { it.value.sumOf { exp -> exp.amount } }
-            }
-
-            override fun getBudgetStatus(): Map<String, Any> {
-                return mapOf(
-                    "totalBudget" to (summary.totalIncome * 0.8),
-                    "spent" to summary.totalExpenses,
-                    "remaining" to (summary.totalIncome * 0.8 - summary.totalExpenses)
-                )
-            }
-
-            override fun getGoalsProgress(): Map<String, Any> {
-                return mapOf("message" to "No active goals yet")
-            }
-
-            override fun getLoansStatus(): Map<String, Any> {
-                return mapOf("message" to "No active loans")
-            }
-        }
-    }
+    // Initialize ConversationalAI (thin interface to FinancialLearner)
+    val conversationalAI = remember { ConversationalAI.getInstance(context) }
+    var engineStatus by remember { mutableStateOf("Initializing...") }
+    var isEngineReady by remember { mutableStateOf(false) }
 
     var userInput by remember { mutableStateOf("") }
     var messages by remember { mutableStateOf(listOf<ChatMessage>()) }
     var isTyping by remember { mutableStateOf(false) }
+    var currentStreamingContent by remember { mutableStateOf("") }
     var suggestedQuestions by remember { mutableStateOf<List<String>>(emptyList()) }
 
     val listState = rememberLazyListState()
     val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
 
+    // Initialize AI
+    LaunchedEffect(Unit) {
+        scope.launch {
+            try {
+                conversationalAI.initialize()
+                isEngineReady = true
+                engineStatus = "Ready (On-Device)"
+            } catch (_: Exception) {
+                isEngineReady = true
+                engineStatus = "Ready (Fallback)"
+            }
+        }
+    }
+
     // Initialize with welcome message
     LaunchedEffect(Unit) {
         if (messages.isEmpty()) {
             val welcomeMessage = buildString {
-                append("👋 **Hi! I'm Budgie AI**\n\n")
-                append("Your intelligent financial advisor powered by:\n")
-                append("• 🧠 Intent Classification\n")
-                append("• 📊 Entity Extraction\n")
-                append("• 💡 Financial ML Pipeline\n")
-                append("• 🔒 Rule-based Reasoning\n\n")
-                append("**Ask me about:**\n")
-                append("• \"How much did I spend this month?\"\n")
-                append("• \"What's my biggest expense category?\"\n")
-                append("• \"Am I overspending anywhere?\"\n")
-                append("• \"Show my spending trends\"\n")
-                append("• \"Give me financial advice\"")
+                append("**Hi! I'm Budgie, your financial companion.**\n\n")
+                append("I use what I've learned from your financial data to help you:\n\n")
+                append("• Understand your spending patterns\n")
+                append("• Track bills and savings\n")
+                append("• Get personalized insights\n\n")
+                append("🔒 100% private - everything stays on your device.\n\n")
+                append("What would you like to know?")
             }
             messages = listOf(
                 ChatMessage(
                     content = welcomeMessage,
                     isUser = false,
                     suggestions = listOf(
-                        "Show my spending",
-                        "What are my trends?",
-                        "Am I overspending?"
+                        "How am I doing?",
+                        "My spending this month",
+                        "Upcoming bills"
                     )
                 )
             )
             suggestedQuestions = listOf(
-                "How much did I spend?",
-                "Show my income",
-                "Financial insights"
+                "Can I afford this?",
+                "Help me save more",
+                "My top categories"
             )
         }
     }
 
-    // Auto-scroll to bottom
+    // Auto-scroll to bottom when messages change
     LaunchedEffect(messages.size) {
         if (messages.isNotEmpty()) {
+            // Small delay to ensure the item is rendered
+            kotlinx.coroutines.delay(100)
             listState.animateScrollToItem(messages.size - 1)
         }
     }
 
-    // Send message function
+    // Auto-scroll when message content updates (after response generation)
+    LaunchedEffect(messages.lastOrNull()?.content, currentStreamingContent) {
+        if (messages.isNotEmpty()) {
+            kotlinx.coroutines.delay(50)
+            listState.animateScrollToItem(messages.size - 1)
+        }
+    }
+
+    // Auto-scroll when typing indicator appears/disappears
+    LaunchedEffect(isTyping) {
+        if (messages.isNotEmpty()) {
+            kotlinx.coroutines.delay(100)
+            listState.animateScrollToItem(messages.size - 1)
+        }
+    }
+
+    // Send message function using ConversationalAI
     fun sendMessage(text: String = userInput) {
         if (text.isBlank()) return
 
         val userMessage = ChatMessage(content = text.trim(), isUser = true)
         messages = messages + userMessage
+
+        // Scroll after user message
+        scope.launch {
+            kotlinx.coroutines.delay(50)
+            if (messages.isNotEmpty()) {
+                listState.animateScrollToItem(messages.size - 1)
+            }
+        }
+
         val query = text
         userInput = ""
         focusManager.clearFocus()
         suggestedQuestions = emptyList()
+        currentStreamingContent = ""
 
         scope.launch {
             isTyping = true
 
-            conversationalAI.processInput(query, financialDataProvider)
-                .onEach { response ->
-                    val aiMessage = ChatMessage(
-                        content = response.text,
-                        isUser = false,
-                        suggestions = response.suggestions,
-                        intent = response.intent
-                    )
-                    messages = messages + aiMessage
-                    suggestedQuestions = response.suggestions
+            // Add placeholder for response
+            val responseMessageId = UUID.randomUUID().toString()
+            messages = messages + ChatMessage(
+                id = responseMessageId,
+                content = "Thinking...",
+                isUser = false,
+                isStreaming = true
+            )
+
+            // Scroll to show thinking indicator
+            kotlinx.coroutines.delay(50)
+            if (messages.isNotEmpty()) {
+                listState.animateScrollToItem(messages.size - 1)
+            }
+
+            try {
+                // Use ConversationalAI - it handles everything:
+                // Language detection → Translation → Intent understanding →
+                // Query Learner → Format response → Translate back
+                val response = conversationalAI.processMessage(query)
+
+                // Update with actual response
+                messages = messages.map { msg ->
+                    if (msg.id == responseMessageId) {
+                        msg.copy(
+                            content = response.content,
+                            isStreaming = false,
+                            suggestions = response.suggestions
+                        )
+                    } else msg
                 }
-                .catch { e ->
-                    val errorMessage = ChatMessage(
-                        content = "I encountered an issue processing that. Could you try rephrasing?",
-                        isUser = false
-                    )
-                    messages = messages + errorMessage
+
+                suggestedQuestions = response.suggestions
+
+                // Scroll to show the complete response
+                kotlinx.coroutines.delay(100)
+                if (messages.isNotEmpty()) {
+                    listState.animateScrollToItem(messages.size - 1)
                 }
-                .collect()
+
+            } catch (_: Exception) {
+                messages = messages.map { msg ->
+                    if (msg.id == responseMessageId) {
+                        msg.copy(
+                            content = "I apologize, something went wrong. Please try again.",
+                            isStreaming = false
+                        )
+                    } else msg
+                }
+
+                // Scroll after error message too
+                kotlinx.coroutines.delay(100)
+                if (messages.isNotEmpty()) {
+                    listState.animateScrollToItem(messages.size - 1)
+                }
+            }
 
             isTyping = false
+            currentStreamingContent = ""
+
+            // Final scroll to ensure we're at the bottom
+            kotlinx.coroutines.delay(50)
+            if (messages.isNotEmpty()) {
+                listState.animateScrollToItem(messages.size - 1)
+            }
         }
     }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
+            .navigationBarsPadding() // Prevent overlap with system navigation buttons
             .background(
                 brush = Brush.verticalGradient(
                     colors = listOf(WealthNavy, WealthNavyLight, WealthNavy)
@@ -294,12 +341,13 @@ fun AIChatScreen(
                                 modifier = Modifier
                                     .size(8.dp)
                                     .clip(CircleShape)
-                                    .background(WealthEmerald)
+                                    .background(if (isEngineReady) WealthEmerald else WealthGold)
                             )
                             Text(
-                                "Multimodal Financial Advisor",
+                                engineStatus,
                                 style = MaterialTheme.typography.labelSmall,
-                                color = WealthSoftWhite.copy(alpha = 0.7f)
+                                color = WealthSoftWhite.copy(alpha = 0.7f),
+                                maxLines = 1
                             )
                         }
                     }
@@ -308,7 +356,6 @@ fun AIChatScreen(
 
                     // Reset conversation button
                     IconButton(onClick = {
-                        conversationalAI.resetConversation()
                         messages = emptyList()
                         suggestedQuestions = emptyList()
                     }) {
@@ -379,7 +426,9 @@ fun AIChatScreen(
 
             // Input Field
             Surface(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 16.dp), // Add bottom padding to prevent overlapping with nav buttons
                 color = WealthNavy,
                 shadowElevation = 8.dp
             ) {
@@ -387,6 +436,7 @@ fun AIChatScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 12.dp)
+                        .padding(bottom = 8.dp) // Extra padding at bottom
                         .clip(RoundedCornerShape(24.dp))
                         .background(WealthNavyLight)
                         .border(
@@ -570,15 +620,26 @@ private fun ChatBubble(
             }
         }
 
-        // Show intent badge for debugging (optional)
-        if (!isUser && message.intent != null) {
-            Text(
-                text = "Intent: ${message.intent.name}",
-                style = MaterialTheme.typography.labelSmall,
-                color = WealthSoftWhite.copy(alpha = 0.3f),
-                modifier = Modifier.padding(start = 40.dp, top = 2.dp),
-                fontSize = 9.sp
-            )
+        // Show streaming indicator
+        if (!isUser && message.isStreaming) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(
+                modifier = Modifier.padding(start = 40.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(12.dp),
+                    strokeWidth = 2.dp,
+                    color = WealthEmerald
+                )
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    "Thinking...",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = WealthSoftWhite.copy(alpha = 0.5f),
+                    fontSize = 10.sp
+                )
+            }
         }
     }
 }
@@ -655,3 +716,35 @@ private fun Modifier.scale(scale: Float): Modifier = this.then(
     Modifier.graphicsLayer(scaleX = scale, scaleY = scale)
 )
 
+// Generate contextual suggestions based on query - matching ai.txt style
+private fun generateSuggestions(lastQuery: String): List<String> {
+    val query = lastQuery.lowercase()
+    return when {
+        query.contains("spend") || query.contains("expense") ->
+            listOf("My top categories", "Am I overspending?", "Tips to reduce")
+        query.contains("save") || query.contains("saving") ->
+            listOf("How to save more?", "Am I on track?", "50/30/20 rule")
+        query.contains("budget") ->
+            listOf("Budget status", "Adjust my budget", "Budget tips")
+        query.contains("bill") || query.contains("due") ->
+            listOf("All upcoming bills", "Payment reminders", "Bill strategies")
+        query.contains("income") || query.contains("earn") ->
+            listOf("My income breakdown", "Savings rate", "Can I afford more?")
+        query.contains("risk") || query.contains("safe") ->
+            listOf("How to improve?", "Build emergency fund", "Reduce expenses")
+        query.contains("predict") || query.contains("forecast") ->
+            listOf("End of month balance", "Next week outlook", "Budget alert")
+        query.contains("loan") || query.contains("debt") ->
+            listOf("Pay off faster", "Loan vs savings", "Interest tips")
+        query.contains("goal") ->
+            listOf("Create new goal", "Track progress", "Goal strategies")
+        query.contains("yes") || query.contains("sure") || query.contains("okay") ->
+            listOf("Show me details", "More tips", "What else?")
+        query.contains("hello") || query.contains("hi") || query.contains("hey") ->
+            listOf("How am I doing?", "Predict my bills", "Help me save")
+        query.contains("track") || query.contains("status") ->
+            listOf("Detailed breakdown", "Compare to last month", "Set targets")
+        else ->
+            listOf("How am I doing?", "Predict my bills", "Help me save")
+    }
+}

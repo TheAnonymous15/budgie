@@ -2,6 +2,7 @@ package com.example.budgie.ui.navigation
 
 sealed class Screen(val route: String) {
     object Onboarding : Screen("onboarding")
+    object Lock : Screen("lock")
     object Dashboard : Screen("dashboard")
     object Expenses : Screen("expenses")
     object Income : Screen("income")
@@ -20,4 +21,13 @@ sealed class Screen(val route: String) {
     object Loans : Screen("loans")
     object ShoppingList : Screen("shopping_list")
     object AIChat : Screen("ai_chat")
+    object Notifications : Screen("notifications")
+    // Menu screens
+    object Profile : Screen("profile")
+    object Security : Screen("security")
+    object BiometricDiagnostics : Screen("biometric_diagnostics")
+    object Help : Screen("help")
+    object About : Screen("about")
+    object PrivacyPolicy : Screen("privacy_policy")
+    object Terms : Screen("terms")
 }

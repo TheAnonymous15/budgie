@@ -58,6 +58,8 @@ class FinanceRepository(
 
     fun getUnpaidBills(): Flow<List<Bill>> = billDao.getUnpaidBills()
 
+    fun getPaidBills(): Flow<List<Bill>> = billDao.getPaidBills()
+
     fun getOverdueBills(): Flow<List<Bill>> = billDao.getOverdueBills(System.currentTimeMillis())
 
     fun getTotalUnpaidBills(): Flow<Double> = billDao.getTotalUnpaidBills().map { it ?: 0.0 }
@@ -67,6 +69,12 @@ class FinanceRepository(
     suspend fun updateBill(bill: Bill) = billDao.updateBill(bill)
 
     suspend fun deleteBill(bill: Bill) = billDao.deleteBill(bill)
+
+    suspend fun deleteBillById(billId: Long) {
+        billDao.getBillById(billId)?.let { billDao.deleteBill(it) }
+    }
+
+    suspend fun getBillById(billId: Long): Bill? = billDao.getBillById(billId)
 
     suspend fun markBillAsPaid(billId: Long, isPaid: Boolean) =
         billDao.updateBillPaidStatus(billId, isPaid)

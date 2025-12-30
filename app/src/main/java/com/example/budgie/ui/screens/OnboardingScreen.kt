@@ -773,7 +773,7 @@ private fun SecuritySelectionSection(
             icon = Icons.Filled.Fingerprint,
             secondaryIcon = Icons.Filled.Pin,
             title = "Biometrics + PIN",
-            subtitle = "Quick unlock with secure backup",
+            subtitle = "Fingerprint + PIN backup",
             isRecommended = true,
             accentColor = Color(0xFF10B981)
         )

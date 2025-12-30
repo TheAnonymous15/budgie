@@ -2,30 +2,12 @@ package com.example.budgie.ai
 
 import android.content.Context
 import com.example.budgie.data.model.*
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
-import kotlinx.coroutines.delay
 
 /**
- * Financial Advisor - Comprehensive financial guidance engine
- * Uses rule-based analysis and template-based NLG for reliable insights
+ * FinancialAdvisor - Provides basic financial insights
+ * Stub implementation with rule-based logic
  */
 class FinancialAdvisor(private val context: Context) {
-
-    fun getSystemPrompt(data: String): String {
-        return """
-        You are a helpful and friendly AI assistant for an application called "Budgie".
-        Your mission is to provide financial advice and answer questions based on the user's spending data.
-
-        You should be able to:
-        - Analyze spending patterns and identify trends.
-        - Identify areas where the user can save money.
-        - Answer questions about the user's spending history.
-
-        Here is the user's financial data:
-        $data
-        """
-    }
 
     /**
      * Generate spending insights based on financial data
@@ -39,233 +21,167 @@ class FinancialAdvisor(private val context: Context) {
         val insights = mutableListOf<SpendingInsight>()
 
         // Savings rate insight
-        val savingsRate = if (summary.totalIncome > 0) {
-            (summary.netSavings / summary.totalIncome) * 100
-        } else 0.0
-
-        insights.add(
-            when {
-                savingsRate < 0 -> SpendingInsight(
-                    type = InsightType.OVERSPENDING,
-                    title = "Overspending Alert",
-                    description = "You're spending more than you earn this month.",
-                    actionable = "Review your expenses and find areas to cut back.",
-                    priority = InsightPriority.CRITICAL
-                )
-                savingsRate < 10 -> SpendingInsight(
-                    type = InsightType.SAVING_OPPORTUNITY,
-                    title = "Low Savings Rate",
-                    description = "Your savings rate is ${String.format("%.1f", savingsRate)}%",
-                    actionable = "Try to save at least 20% of your income.",
-                    priority = InsightPriority.HIGH
-                )
-                savingsRate < 20 -> SpendingInsight(
+        if (summary.totalIncome > 0) {
+            val savingsRate = summary.savingsRate
+            insights.add(
+                SpendingInsight(
                     type = InsightType.TREND_ANALYSIS,
-                    title = "Good Progress",
-                    description = "Savings rate: ${String.format("%.1f", savingsRate)}%",
-                    actionable = "You're doing well! Aim for 20% to build wealth faster.",
-                    priority = InsightPriority.MEDIUM
+                    title = "Savings Rate",
+                    description = if (savingsRate >= 20)
+                        "Great job! You're saving ${String.format("%.1f", savingsRate)}% of your income."
+                    else
+                        "Your savings rate is ${String.format("%.1f", savingsRate)}%. Consider aiming for 20%.",
+                    actionable = if (savingsRate < 20) "Review spending to find savings" else "Keep up the great work!",
+                    priority = if (savingsRate < 10) InsightPriority.HIGH
+                              else if (savingsRate < 20) InsightPriority.MEDIUM
+                              else InsightPriority.LOW
                 )
-                else -> SpendingInsight(
-                    type = InsightType.GOOD_HABIT,
-                    title = "Excellent Savings!",
-                    description = "Savings rate: ${String.format("%.1f", savingsRate)}%",
-                    actionable = "Great job! Consider investing your surplus.",
+            )
+        }
+
+        // Budget alerts
+        budgets.forEach { budget ->
+            val spent = expenses.filter { expense ->
+                expense.category == budget.category
+            }.sumOf { it.amount }
+            val percentage = if (budget.limit > 0) (spent / budget.limit) * 100 else 0.0
+
+            if (percentage >= 90) {
+                insights.add(
+                    SpendingInsight(
+                        type = InsightType.BUDGET_WARNING,
+                        title = "${budget.category} Budget Alert",
+                        description = "You've used ${String.format("%.0f", percentage)}% of your ${budget.category} budget.",
+                        actionable = "Review ${budget.category} spending",
+                        priority = if (percentage >= 100) InsightPriority.HIGH else InsightPriority.MEDIUM
+                    )
+                )
+            }
+        }
+
+        // Top spending category
+        val categorySpending = expenses.groupBy { it.category }
+            .mapValues { (_, exps) -> exps.sumOf { it.amount } }
+            .toList()
+            .sortedByDescending { it.second }
+
+        if (categorySpending.isNotEmpty()) {
+            val topCategory = categorySpending.first()
+            insights.add(
+                SpendingInsight(
+                    type = InsightType.TREND_ANALYSIS,
+                    title = "Top Spending: ${topCategory.first}",
+                    description = "You spent $${String.format("%.2f", topCategory.second)} on ${topCategory.first} this month.",
+                    actionable = "Review ${topCategory.first} expenses",
                     priority = InsightPriority.LOW
                 )
-            }
-        )
-
-        // Category-specific insights
-        val categorySpending = expenses.groupBy { it.category }
-            .mapValues { it.value.sumOf { exp -> exp.amount } }
-
-        val totalSpending = summary.totalExpenses
-
-        categorySpending.forEach { (category, amount) ->
-            val percentage = if (totalSpending > 0) (amount / totalSpending) * 100 else 0.0
-
-            if (percentage > 40) {
-                insights.add(SpendingInsight(
-                    type = InsightType.OVERSPENDING,
-                    title = "High ${category.displayName} Spending",
-                    description = "You spent ${String.format("%.0f", percentage)}% of your total on ${category.displayName.lowercase()}.",
-                    actionable = "Consider reviewing these expenses for potential savings.",
-                    potentialSavings = amount * 0.2,
-                    priority = InsightPriority.HIGH
-                ))
-            }
-        }
-
-        // Budget insights
-        budgets.forEach { budget ->
-            val spent = categorySpending[budget.category] ?: 0.0
-            val utilization = if (budget.limit > 0) (spent / budget.limit) * 100 else 0.0
-
-            when {
-                utilization > 100 -> insights.add(SpendingInsight(
-                    type = InsightType.BUDGET_WARNING,
-                    title = "${budget.category.displayName} Budget Exceeded",
-                    description = "You've spent ${String.format("%.0f", utilization)}% of your ${budget.category.displayName} budget.",
-                    actionable = "Reduce spending in this category immediately.",
-                    potentialSavings = spent - budget.limit,
-                    priority = InsightPriority.CRITICAL
-                ))
-                utilization > 80 -> insights.add(SpendingInsight(
-                    type = InsightType.BUDGET_WARNING,
-                    title = "${budget.category.displayName} Budget Alert",
-                    description = "You've used ${String.format("%.0f", utilization)}% of your ${budget.category.displayName} budget.",
-                    actionable = "Be careful with remaining budget.",
-                    priority = InsightPriority.MEDIUM
-                ))
-            }
-        }
-
-        // General tips
-        if (insights.size < 3) {
-            insights.add(SpendingInsight(
-                type = InsightType.SAVING_OPPORTUNITY,
-                title = "Financial Tip",
-                description = "Track every expense to understand your spending habits better.",
-                actionable = "Small expenses add up - consider using the 24-hour rule for non-essential purchases.",
-                priority = InsightPriority.LOW
-            ))
+            )
         }
 
         return insights.take(5)
     }
 
     /**
-     * Generate investment suggestions based on user profile
+     * Generate investment suggestions
      */
     fun generateInvestmentSuggestions(
         summary: FinancialSummary,
         currentSavings: Double,
-        riskLevel: RiskLevel,
-        userAge: Int
+        riskTolerance: RiskLevel,
+        age: Int
     ): List<InvestmentSuggestion> {
         val suggestions = mutableListOf<InvestmentSuggestion>()
-        val monthlySurplus = summary.netSavings.coerceAtLeast(0.0)
-
-        // Calculate recommended allocation based on age and risk
-        val stockAllocation = when (riskLevel) {
-            RiskLevel.LOW -> (100 - userAge - 10).coerceIn(20, 50)
-            RiskLevel.MEDIUM -> (100 - userAge).coerceIn(30, 70)
-            RiskLevel.HIGH -> (110 - userAge).coerceIn(40, 90)
-        }
-
-        if (monthlySurplus > 0) {
-            suggestions.add(InvestmentSuggestion(
-                type = InvestmentType.ETF,
-                title = "Index Fund Portfolio",
-                description = "Diversified stock index fund tracking the market.",
-                riskLevel = riskLevel,
-                expectedReturn = "8% annual",
-                minimumAmount = monthlySurplus * (stockAllocation / 100.0),
-                suitabilityScore = 85
-            ))
-
-            suggestions.add(InvestmentSuggestion(
-                type = InvestmentType.BONDS,
-                title = "Bond Fund",
-                description = "Stable returns with lower volatility.",
-                riskLevel = RiskLevel.LOW,
-                expectedReturn = "4% annual",
-                minimumAmount = monthlySurplus * ((100 - stockAllocation) / 100.0),
-                suitabilityScore = 80
-            ))
-        }
 
         // Emergency fund suggestion
-        val emergencyFundTarget = summary.totalExpenses * 6
-        if (currentSavings < emergencyFundTarget) {
-            suggestions.add(0, InvestmentSuggestion(
+        val monthlyExpenses = summary.totalExpenses
+        val emergencyFundTarget = monthlyExpenses * 6
+
+        suggestions.add(
+            InvestmentSuggestion(
                 type = InvestmentType.EMERGENCY_FUND,
                 title = "Emergency Fund",
-                description = "Build 6 months of expenses before investing.",
+                description = "Build 6 months of expenses (\$${String.format("%.0f", emergencyFundTarget)})",
                 riskLevel = RiskLevel.LOW,
-                expectedReturn = "4% annual",
-                minimumAmount = (emergencyFundTarget - currentSavings).coerceAtLeast(0.0),
+                expectedReturn = "2-3%",
+                minimumAmount = 100.0,
                 suitabilityScore = 95
-            ))
+            )
+        )
+
+        // Based on risk tolerance
+        if (currentSavings >= emergencyFundTarget && summary.netSavings > 0) {
+            when (riskTolerance) {
+                RiskLevel.LOW -> {
+                    suggestions.add(
+                        InvestmentSuggestion(
+                            type = InvestmentType.SAVINGS_ACCOUNT,
+                            title = "High-Yield Savings",
+                            description = "Safe returns with easy access",
+                            riskLevel = RiskLevel.LOW,
+                            expectedReturn = "4-5%",
+                            minimumAmount = 100.0,
+                            suitabilityScore = 90
+                        )
+                    )
+                }
+                RiskLevel.MEDIUM -> {
+                    suggestions.add(
+                        InvestmentSuggestion(
+                            type = InvestmentType.ETF,
+                            title = "Index Funds",
+                            description = "Diversified stock market exposure",
+                            riskLevel = RiskLevel.MEDIUM,
+                            expectedReturn = "7-10%",
+                            minimumAmount = 500.0,
+                            suitabilityScore = 85
+                        )
+                    )
+                }
+                RiskLevel.HIGH -> {
+                    suggestions.add(
+                        InvestmentSuggestion(
+                            type = InvestmentType.STOCKS,
+                            title = "Growth Stocks",
+                            description = "Higher risk, higher potential returns",
+                            riskLevel = RiskLevel.HIGH,
+                            expectedReturn = "10-15%",
+                            minimumAmount = 1000.0,
+                            suitabilityScore = 75
+                        )
+                    )
+                }
+            }
         }
 
         return suggestions
     }
 
     /**
-     * Calculate wealth projection based on current status
+     * Calculate wealth projection
      */
     fun calculateWealthProjection(
         currentNetWorth: Double,
         monthlyContribution: Double,
-        annualReturn: Double = 0.07
+        annualReturnRate: Double = 0.07,
+        yearsToProject: Int = 30
     ): WealthProjection {
-        val monthlyReturn = annualReturn / 12
+        val projections = mutableMapOf<Int, Double>()
+        var balance = currentNetWorth
+        val monthlyRate = annualReturnRate / 12
 
-        fun projectValue(months: Int): Double {
-            var value = currentNetWorth
-            repeat(months) {
-                value = value * (1 + monthlyReturn) + monthlyContribution
+        for (year in 1..yearsToProject) {
+            for (month in 1..12) {
+                balance = balance * (1 + monthlyRate) + monthlyContribution
             }
-            return value
+            projections[year] = balance
         }
-
-        val projections = mapOf(
-            1 to projectValue(12),
-            5 to projectValue(60),
-            10 to projectValue(120)
-        )
 
         return WealthProjection(
             currentNetWorth = currentNetWorth,
             projectedNetWorth = projections,
             monthlyContribution = monthlyContribution,
-            assumedReturnRate = annualReturn
+            assumedReturnRate = annualReturnRate
         )
     }
-
-    /**
-     * Process a question and generate a response using rule-based templates
-     */
-    fun ask(question: String): Flow<String> = flow {
-        delay(500) // Simulate thinking time
-        val response = generateResponse(question)
-        emit(response)
-    }
-
-    private fun generateResponse(question: String): String {
-        val q = question.lowercase()
-
-        return when {
-            q.contains("spend") || q.contains("expense") -> {
-                "Based on your data, I can help analyze your spending patterns. " +
-                "Use the dashboard to see detailed breakdowns by category."
-            }
-            q.contains("save") || q.contains("saving") -> {
-                "Great question about savings! The key is to track your expenses " +
-                "consistently and aim for the 50/30/20 rule: 50% needs, 30% wants, 20% savings."
-            }
-            q.contains("budget") -> {
-                "Budgeting is essential for financial health. Start by listing your " +
-                "fixed expenses, then allocate funds for variable expenses and savings."
-            }
-            q.contains("income") -> {
-                "Your income forms the foundation of your financial plan. " +
-                "Make sure to track all income sources for accurate insights."
-            }
-            q.contains("advice") || q.contains("tip") -> {
-                "Here are some financial tips:\n" +
-                "1. Track every expense\n" +
-                "2. Build an emergency fund\n" +
-                "3. Avoid unnecessary debt\n" +
-                "4. Invest for the future\n" +
-                "5. Review your finances monthly"
-            }
-            else -> {
-                "I'm here to help with your financial questions. " +
-                "Ask me about spending, saving, budgeting, or income!"
-            }
-        }
-    }
 }
+

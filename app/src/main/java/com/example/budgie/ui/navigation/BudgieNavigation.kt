@@ -8,6 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -16,6 +17,7 @@ import com.example.budgie.data.preferences.UserPreferencesManager
 import com.example.budgie.security.SecurityManager
 import com.example.budgie.ui.screens.*
 import com.example.budgie.ui.viewmodel.MainViewModel
+import com.example.budgie.ui.viewmodel.ModelDownloadViewModel
 import java.util.Calendar
 
 @Composable
@@ -28,7 +30,15 @@ fun BudgieNavigation(
     val preferencesManager = remember { UserPreferencesManager.getInstance(context) }
     val userProfile by preferencesManager.userProfile.collectAsStateWithLifecycle(initialValue = null)
 
-    var isLocked by remember { mutableStateOf(true) }
+    // Shared ModelDownloadViewModel for Dashboard and AIChat screens
+    val modelDownloadViewModel: ModelDownloadViewModel = viewModel(
+        factory = ModelDownloadViewModel.Factory(context)
+    )
+
+    // Initialize isLocked based on security settings - locked if security is enabled and not authenticated
+    val securityType = securityManager.getSecurityType()
+    val initialLockState = securityType != SecurityManager.SECURITY_NONE && !securityManager.isAuthenticated()
+    var isLocked by remember { mutableStateOf(initialLockState) }
     var showBirthdayCelebration by remember { mutableStateOf(false) }
     var birthdayAge by remember { mutableStateOf(0) }
     var birthdayChecked by remember { mutableStateOf(false) }
@@ -90,10 +100,8 @@ fun BudgieNavigation(
         }
     }
 
-    // Check if app needs to be locked
-    val securityType = securityManager.getSecurityType()
-    val isAuthenticated = securityManager.isAuthenticated()
-    val shouldShowLock = securityType != SecurityManager.SECURITY_NONE && !isAuthenticated && userProfile != null
+    // Check if app needs to be locked - use the already declared securityType
+    val shouldShowLock = securityType != SecurityManager.SECURITY_NONE && userProfile != null && isLocked
 
     // Show birthday celebration first if it's user's birthday
     if (showBirthdayCelebration && userProfile != null) {
@@ -107,7 +115,7 @@ fun BudgieNavigation(
                 showBirthdayCelebration = false
             }
         )
-    } else if (shouldShowLock && isLocked) {
+    } else if (shouldShowLock) {
         LockScreen(
             securityManager = securityManager,
             onUnlocked = { isLocked = false }
@@ -165,8 +173,26 @@ fun BudgieNavigation(
                 onNavigateToLoans = { navController.navigate(Screen.Loans.route) },
                 onNavigateToShoppingList = { navController.navigate(Screen.ShoppingList.route) },
                 onNavigateToAIChat = { navController.navigate(Screen.AIChat.route) },
+                onNavigateToNotifications = { navController.navigate(Screen.Notifications.route) },
                 onAddExpense = { navController.navigate(Screen.AddExpense.route) },
-                onAddIncome = { navController.navigate(Screen.AddIncome.route) }
+                onAddIncome = { navController.navigate(Screen.AddIncome.route) },
+                // Menu navigation
+                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
+                onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                onNavigateToSecurity = { navController.navigate(Screen.Security.route) },
+                onNavigateToHelp = { navController.navigate(Screen.Help.route) },
+                onNavigateToAbout = { navController.navigate(Screen.About.route) },
+                // Logout - go back to lock screen
+                onLogout = {
+                    securityManager.setAuthenticated(false)
+                    isLocked = true
+                },
+                // Exit - close the app
+                onExit = {
+                    (context as? android.app.Activity)?.finishAffinity()
+                },
+                // Model download
+                modelDownloadViewModel = modelDownloadViewModel
             )
         }
 
@@ -317,6 +343,83 @@ fun BudgieNavigation(
         composable(Screen.AIChat.route) {
             AIChatScreen(
                 viewModel = viewModel,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.Notifications.route) {
+            NotificationsScreen(
+                onBack = { navController.popBackStack() },
+                onNavigateToRoute = { route ->
+                    // Navigate to the appropriate screen based on route
+                    when (route) {
+                        "dashboard" -> navController.navigate(Screen.Dashboard.route)
+                        "expenses" -> navController.navigate(Screen.Expenses.route)
+                        "income" -> navController.navigate(Screen.Income.route)
+                        "bills" -> navController.navigate(Screen.Bills.route)
+                        "budget" -> navController.navigate(Screen.Budget.route)
+                        "goals" -> navController.navigate(Screen.Goals.route)
+                        "loans" -> navController.navigate(Screen.Loans.route)
+                        "add_expense" -> navController.navigate(Screen.AddExpense.route)
+                        "insights" -> navController.navigate(Screen.Insights.route)
+                        else -> { /* Unknown route */ }
+                    }
+                }
+            )
+        }
+
+        // ==================== Menu Screens ====================
+        composable(Screen.Profile.route) {
+            ProfileScreen(
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.Settings.route) {
+            SettingsScreen(
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() },
+                onNavigateToSecurity = { navController.navigate(Screen.Security.route) }
+            )
+        }
+
+        composable(Screen.Security.route) {
+            SecuritySettingsScreen(
+                securityManager = securityManager,
+                onBack = { navController.popBackStack() },
+                onNavigateToBiometricDiagnostics = { navController.navigate(Screen.BiometricDiagnostics.route) }
+            )
+        }
+
+        composable(Screen.BiometricDiagnostics.route) {
+            BiometricDiagnosticsScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.Help.route) {
+            HelpSupportScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.About.route) {
+            AboutScreen(
+                onBack = { navController.popBackStack() },
+                onNavigateToPrivacyPolicy = { navController.navigate(Screen.PrivacyPolicy.route) },
+                onNavigateToTerms = { navController.navigate(Screen.Terms.route) }
+            )
+        }
+
+        composable(Screen.PrivacyPolicy.route) {
+            PrivacyPolicyScreen(
+                onBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(Screen.Terms.route) {
+            TermsOfServiceScreen(
                 onBack = { navController.popBackStack() }
             )
         }

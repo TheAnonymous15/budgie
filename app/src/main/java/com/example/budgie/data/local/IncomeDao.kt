@@ -10,6 +10,9 @@ interface IncomeDao {
     @Query("SELECT * FROM incomes ORDER BY date DESC")
     fun getAllIncomes(): Flow<List<Income>>
 
+    @Query("SELECT * FROM incomes ORDER BY date DESC")
+    suspend fun getAllIncomesOnce(): List<Income>
+
     @Query("SELECT * FROM incomes WHERE date >= :startDate AND date <= :endDate ORDER BY date DESC")
     fun getIncomesByDateRange(startDate: Long, endDate: Long): Flow<List<Income>>
 
@@ -33,5 +36,8 @@ interface IncomeDao {
 
     @Query("DELETE FROM incomes WHERE id = :id")
     suspend fun deleteIncomeById(id: Long)
+
+    @Query("DELETE FROM incomes")
+    suspend fun deleteAll()
 }
 

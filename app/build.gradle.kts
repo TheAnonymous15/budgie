@@ -103,8 +103,24 @@ dependencies {
     implementation("org.tensorflow:tensorflow-lite:2.14.0")
     implementation("org.tensorflow:tensorflow-lite-support:0.4.4")
 
+    // ONNX Runtime for Phi-3.5 and other transformer models
+    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.16.3")
+    implementation("com.microsoft.onnxruntime:onnxruntime-extensions-android:0.9.0")
+
+    // OkHttp for model downloading and API calls
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
+    // Retrofit for REST API calls (M-Pesa)
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+
     // ML Kit for text recognition (receipts)
     implementation("com.google.mlkit:text-recognition:16.0.0")
+
+    // ML Kit Language ID and Translation for multilingual chatbot
+    implementation("com.google.mlkit:language-id:17.0.4")
+    implementation("com.google.mlkit:translate:17.0.1")
 
     // Statistics and Math libraries
     implementation("org.apache.commons:commons-math3:3.6.1")

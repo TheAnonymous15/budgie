@@ -104,5 +104,11 @@ interface ShoppingDao {
         WHERE sl.isCompleted = 0
     """)
     fun getTotalItemsCount(): Flow<Int>
+
+    @Query("DELETE FROM shopping_lists")
+    suspend fun deleteAllLists()
+
+    @Query("DELETE FROM shopping_items")
+    suspend fun deleteAllItems()
 }
 

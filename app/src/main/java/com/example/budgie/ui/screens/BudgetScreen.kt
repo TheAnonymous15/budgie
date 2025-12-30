@@ -668,7 +668,7 @@ fun AddBudgetScreen(
                             Spacer(modifier = Modifier.height(8.dp))
 
                             Text(
-                                "Add multiple category budgets at once. New rows appear automatically!",
+                                "New rows appear automatically!",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = WealthTheme.SoftWhite.copy(alpha = 0.6f),
                                 textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -945,6 +945,7 @@ fun AddBudgetScreen(
 
                 // Save Button
                 item {
+                    Spacer(modifier = Modifier.height(8.dp))
                     Button(
                         onClick = {
                             validEntries.forEach { entry ->
@@ -965,19 +966,24 @@ fun AddBudgetScreen(
                         enabled = validEntries.isNotEmpty(),
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(56.dp),
+                            .height(56.dp)
+                            .shadow(
+                                if (validEntries.isNotEmpty()) 12.dp else 0.dp,
+                                RoundedCornerShape(16.dp),
+                                ambientColor = WealthTheme.Emerald.copy(alpha = 0.4f)
+                            ),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = WealthTheme.Emerald,
-                            disabledContainerColor = WealthTheme.SoftWhite.copy(alpha = 0.1f)
+                            disabledContainerColor = WealthTheme.SoftWhite.copy(alpha = 0.15f)
                         ),
                         shape = RoundedCornerShape(16.dp)
                     ) {
                         Icon(
                             Icons.Default.Check,
                             contentDescription = null,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(22.dp)
                         )
-                        Spacer(modifier = Modifier.width(8.dp))
+                        Spacer(modifier = Modifier.width(10.dp))
                         Text(
                             if (validEntries.size == 1) "Save Budget"
                             else "Save ${validEntries.size} Budgets",
@@ -987,7 +993,8 @@ fun AddBudgetScreen(
                     }
                 }
 
-                item { Spacer(modifier = Modifier.height(32.dp)) }
+                // Extra padding for phone navigation buttons
+                item { Spacer(modifier = Modifier.height(48.dp)) }
             }
         }
     }

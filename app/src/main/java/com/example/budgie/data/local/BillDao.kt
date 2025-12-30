@@ -9,8 +9,17 @@ interface BillDao {
     @Query("SELECT * FROM bills ORDER BY dueDate ASC")
     fun getAllBills(): Flow<List<Bill>>
 
+    @Query("SELECT * FROM bills ORDER BY dueDate ASC")
+    suspend fun getAllBillsOnce(): List<Bill>
+
     @Query("SELECT * FROM bills WHERE isPaid = 0 ORDER BY dueDate ASC")
     fun getUnpaidBills(): Flow<List<Bill>>
+
+    @Query("SELECT * FROM bills WHERE isPaid = 0 ORDER BY dueDate ASC")
+    suspend fun getUnpaidBillsOnce(): List<Bill>
+
+    @Query("SELECT * FROM bills WHERE isPaid = 1 ORDER BY dueDate DESC LIMIT 20")
+    fun getPaidBills(): Flow<List<Bill>>
 
     @Query("SELECT * FROM bills WHERE dueDate >= :startDate AND dueDate <= :endDate ORDER BY dueDate ASC")
     fun getBillsByDateRange(startDate: Long, endDate: Long): Flow<List<Bill>>
@@ -35,5 +44,8 @@ interface BillDao {
 
     @Query("UPDATE bills SET isPaid = :isPaid WHERE id = :id")
     suspend fun updateBillPaidStatus(id: Long, isPaid: Boolean)
+
+    @Query("DELETE FROM bills")
+    suspend fun deleteAll()
 }
 

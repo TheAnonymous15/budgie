@@ -59,6 +59,42 @@ class UserPreferencesManager(context: Context) {
             .apply()
     }
 
+    // ========== NOTIFICATION SETTINGS ==========
+
+    fun getNotificationsEnabled(): Boolean = preferences.getBoolean(KEY_NOTIFICATIONS_ENABLED, true)
+    fun setNotificationsEnabled(enabled: Boolean) {
+        preferences.edit().putBoolean(KEY_NOTIFICATIONS_ENABLED, enabled).apply()
+    }
+
+    fun getDailyRemindersEnabled(): Boolean = preferences.getBoolean(KEY_DAILY_REMINDERS, true)
+    fun setDailyRemindersEnabled(enabled: Boolean) {
+        preferences.edit().putBoolean(KEY_DAILY_REMINDERS, enabled).apply()
+    }
+
+    fun getBillRemindersEnabled(): Boolean = preferences.getBoolean(KEY_BILL_REMINDERS, true)
+    fun setBillRemindersEnabled(enabled: Boolean) {
+        preferences.edit().putBoolean(KEY_BILL_REMINDERS, enabled).apply()
+    }
+
+    fun getDailyInsightsEnabled(): Boolean = preferences.getBoolean(KEY_DAILY_INSIGHTS, true)
+    fun setDailyInsightsEnabled(enabled: Boolean) {
+        preferences.edit().putBoolean(KEY_DAILY_INSIGHTS, enabled).apply()
+    }
+
+    // ========== CURRENCY SETTINGS ==========
+
+    fun getCurrencySymbol(): String = preferences.getString(KEY_CURRENCY_SYMBOL, "$") ?: "$"
+    fun setCurrencySymbol(symbol: String) {
+        preferences.edit().putString(KEY_CURRENCY_SYMBOL, symbol).apply()
+    }
+
+    // ========== CLEAR ALL PREFERENCES ==========
+
+    fun clearAllPreferences() {
+        preferences.edit().clear().apply()
+        _userProfile.value = null
+    }
+
     private fun loadUserProfile(): UserProfile? {
         val jsonString = preferences.getString(KEY_USER_PROFILE, null)
         return jsonString?.let {
@@ -74,6 +110,11 @@ class UserPreferencesManager(context: Context) {
         private const val PREFS_NAME = "budgie_user_prefs"
         private const val KEY_USER_PROFILE = "user_profile"
         private const val KEY_BIRTHDAY_SHOWN_YEAR = "birthday_celebration_shown_year"
+        private const val KEY_NOTIFICATIONS_ENABLED = "notifications_enabled"
+        private const val KEY_DAILY_REMINDERS = "daily_reminders_enabled"
+        private const val KEY_BILL_REMINDERS = "bill_reminders_enabled"
+        private const val KEY_DAILY_INSIGHTS = "daily_insights_enabled"
+        private const val KEY_CURRENCY_SYMBOL = "currency_symbol"
 
         @Volatile
         private var INSTANCE: UserPreferencesManager? = null

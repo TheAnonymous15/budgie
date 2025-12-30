@@ -3,8 +3,10 @@ package com.example.budgie.ui.screens
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -19,6 +21,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -377,11 +380,9 @@ fun AddExpenseScreen(
     viewModel: MainViewModel,
     onBack: () -> Unit
 ) {
-    // Expense entries - start with 5 empty rows
+    // Expense entries - start with 1 empty row, auto-adds more
     var expenseEntries by remember {
-        mutableStateOf(
-            (1..5).map { ExpenseEntry(id = it) }
-        )
+        mutableStateOf(listOf(ExpenseEntry(id = 1)))
     }
 
     // Utility calculator states
@@ -401,61 +402,122 @@ fun AddExpenseScreen(
         it.title.isNotBlank() && it.amount.isNotBlank() && (it.amount.toDoubleOrNull() ?: 0.0) > 0
     }
 
+    // Calculate total
+    val totalAmount = validEntries.sumOf { it.amount.toDoubleOrNull() ?: 0.0 }
+
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(
                 brush = Brush.verticalGradient(
-                    colors = listOf(WealthTheme.Navy, Color(0xFF0D2E3D), WealthTheme.Navy)
+                    colors = listOf(
+                        Color(0xFF0A1628),
+                        Color(0xFF0D2137),
+                        Color(0xFF0A1628)
+                    )
                 )
             )
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
-            // Custom Top Bar
+            // Premium Top Bar with glassmorphism
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                WealthTheme.Emerald.copy(alpha = 0.15f),
+                                Color.Transparent
+                            )
+                        )
+                    )
+                    .padding(horizontal = 20.dp, vertical = 16.dp)
             ) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    IconButton(
-                        onClick = onBack,
+                    // Back button with glow
+                    Box(
                         modifier = Modifier
-                            .size(40.dp)
+                            .size(44.dp)
+                            .shadow(8.dp, CircleShape, ambientColor = WealthTheme.Emerald.copy(alpha = 0.3f))
                             .clip(CircleShape)
-                            .background(WealthTheme.SoftWhite.copy(alpha = 0.1f))
+                            .background(
+                                brush = Brush.radialGradient(
+                                    colors = listOf(
+                                        WealthTheme.SoftWhite.copy(alpha = 0.15f),
+                                        WealthTheme.SoftWhite.copy(alpha = 0.05f)
+                                    )
+                                )
+                            )
+                            .border(1.dp, WealthTheme.SoftWhite.copy(alpha = 0.1f), CircleShape),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Default.Close, "Close", tint = WealthTheme.SoftWhite)
-                    }
-
-                    Text(
-                        "Add Expenses",
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        color = WealthTheme.SoftWhite
-                    )
-
-                    // Badge showing count
-                    if (validEntries.isNotEmpty()) {
-                        Box(
-                            modifier = Modifier
-                                .size(40.dp)
-                                .clip(CircleShape)
-                                .background(WealthTheme.Emerald),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                "${validEntries.size}",
-                                color = Color.White,
-                                fontWeight = FontWeight.Bold
+                        IconButton(onClick = onBack) {
+                            Icon(
+                                Icons.Default.Close,
+                                "Close",
+                                tint = WealthTheme.SoftWhite,
+                                modifier = Modifier.size(22.dp)
                             )
                         }
-                    } else {
-                        Spacer(modifier = Modifier.size(40.dp))
+                    }
+
+                    // Title with subtle animation effect
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            "Add Expense",
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.Bold,
+                            color = WealthTheme.SoftWhite,
+                            letterSpacing = 0.5.sp
+                        )
+                        Text(
+                            "Track your spending",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = WealthTheme.SoftWhite.copy(alpha = 0.5f)
+                        )
+                    }
+
+                    // Count badge with glow effect
+                    Box(
+                        modifier = Modifier
+                            .size(44.dp)
+                            .shadow(
+                                if (validEntries.isNotEmpty()) 12.dp else 0.dp,
+                                CircleShape,
+                                ambientColor = WealthTheme.Emerald.copy(alpha = 0.4f)
+                            )
+                            .clip(CircleShape)
+                            .background(
+                                if (validEntries.isNotEmpty())
+                                    Brush.radialGradient(
+                                        colors = listOf(WealthTheme.Emerald, WealthTheme.Emerald.copy(alpha = 0.7f))
+                                    )
+                                else
+                                    Brush.radialGradient(
+                                        colors = listOf(
+                                            WealthTheme.SoftWhite.copy(alpha = 0.1f),
+                                            WealthTheme.SoftWhite.copy(alpha = 0.05f)
+                                        )
+                                    )
+                            )
+                            .border(
+                                1.dp,
+                                if (validEntries.isNotEmpty()) WealthTheme.Emerald.copy(alpha = 0.5f)
+                                else WealthTheme.SoftWhite.copy(alpha = 0.1f),
+                                CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            "${validEntries.size}",
+                            color = Color.White,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
+                        )
                     }
                 }
             }
@@ -465,81 +527,179 @@ fun AddExpenseScreen(
                     .fillMaxSize()
                     .weight(1f)
                     .padding(horizontal = 20.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                // Header Card
+                // Summary Card - Premium glassmorphism
                 item {
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .expenseGlassmorphicCard(WealthTheme.Emerald, 20)
+                            .shadow(16.dp, RoundedCornerShape(24.dp), ambientColor = WealthTheme.Emerald.copy(alpha = 0.2f))
+                            .clip(RoundedCornerShape(24.dp))
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        WealthTheme.Emerald.copy(alpha = 0.2f),
+                                        WealthTheme.Emerald.copy(alpha = 0.08f),
+                                        Color.White.copy(alpha = 0.03f)
+                                    )
+                                )
+                            )
+                            .border(
+                                1.dp,
+                                Brush.verticalGradient(
+                                    listOf(
+                                        WealthTheme.Emerald.copy(alpha = 0.4f),
+                                        WealthTheme.Emerald.copy(alpha = 0.1f)
+                                    )
+                                ),
+                                RoundedCornerShape(24.dp)
+                            )
                     ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(20.dp),
+                                .padding(24.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
+                            // Icon with glow
                             Box(
                                 modifier = Modifier
-                                    .size(56.dp)
+                                    .size(64.dp)
+                                    .shadow(12.dp, CircleShape, ambientColor = WealthTheme.Emerald.copy(alpha = 0.4f))
                                     .clip(CircleShape)
-                                    .background(WealthTheme.Emerald.copy(alpha = 0.2f)),
+                                    .background(
+                                        brush = Brush.radialGradient(
+                                            colors = listOf(
+                                                WealthTheme.Emerald.copy(alpha = 0.3f),
+                                                WealthTheme.Emerald.copy(alpha = 0.1f)
+                                            )
+                                        )
+                                    )
+                                    .border(1.dp, WealthTheme.Emerald.copy(alpha = 0.3f), CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    Icons.Default.ShoppingCart,
+                                    Icons.Default.TrendingDown,
                                     contentDescription = null,
                                     tint = WealthTheme.Emerald,
-                                    modifier = Modifier.size(28.dp)
+                                    modifier = Modifier.size(32.dp)
                                 )
                             }
 
-                            Spacer(modifier = Modifier.height(12.dp))
+                            Spacer(modifier = Modifier.height(16.dp))
 
                             Text(
-                                "Add Multiple Expenses",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                color = WealthTheme.SoftWhite
-                            )
-
-                            Spacer(modifier = Modifier.height(4.dp))
-
-                            Text(
-                                "Add multiple expenses at once. New rows appear automatically!",
-                                style = MaterialTheme.typography.bodySmall,
+                                "Total Expense",
+                                style = MaterialTheme.typography.labelLarge,
                                 color = WealthTheme.SoftWhite.copy(alpha = 0.6f),
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                letterSpacing = 1.sp
                             )
+
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            // Amount with premium styling
+                            Text(
+                                formatCurrency(totalAmount),
+                                style = MaterialTheme.typography.headlineLarge,
+                                fontWeight = FontWeight.Bold,
+                                color = if (totalAmount > 0) WealthTheme.Emerald else WealthTheme.SoftWhite.copy(alpha = 0.4f),
+                                letterSpacing = 1.sp
+                            )
+
+                            if (validEntries.isNotEmpty()) {
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                // Stats row
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceEvenly
+                                ) {
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text(
+                                            "${validEntries.size}",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 20.sp,
+                                            color = WealthTheme.SoftWhite
+                                        )
+                                        Text(
+                                            "Items",
+                                            fontSize = 11.sp,
+                                            color = WealthTheme.SoftWhite.copy(alpha = 0.5f)
+                                        )
+                                    }
+                                    Box(
+                                        modifier = Modifier
+                                            .width(1.dp)
+                                            .height(32.dp)
+                                            .background(WealthTheme.SoftWhite.copy(alpha = 0.1f))
+                                    )
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        Text(
+                                            "${validEntries.map { it.category }.distinct().size}",
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 20.sp,
+                                            color = WealthTheme.SoftWhite
+                                        )
+                                        Text(
+                                            "Categories",
+                                            fontSize = 11.sp,
+                                            color = WealthTheme.SoftWhite.copy(alpha = 0.5f)
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
                 }
 
-                // Expense Entry Rows Header
+                // Section Header
                 item {
                     Row(
+                        modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Icon(
-                            Icons.Default.Edit,
-                            contentDescription = null,
-                            tint = WealthTheme.Emerald,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Text(
-                            "Expense Entries",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = WealthTheme.SoftWhite
-                        )
-                        Spacer(modifier = Modifier.weight(1f))
-                        Text(
-                            "${validEntries.size} valid",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = WealthTheme.Emerald
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(32.dp)
+                                    .clip(RoundedCornerShape(8.dp))
+                                    .background(WealthTheme.Emerald.copy(alpha = 0.15f)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.Default.Edit,
+                                    contentDescription = null,
+                                    tint = WealthTheme.Emerald,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                            Text(
+                                "Expense Entries",
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Bold,
+                                color = WealthTheme.SoftWhite
+                            )
+                        }
+
+                        // Valid count chip
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(WealthTheme.Emerald.copy(alpha = 0.15f))
+                                .padding(horizontal = 12.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                "${validEntries.size} ready",
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = WealthTheme.Emerald
+                            )
+                        }
                     }
                 }
 
@@ -549,21 +709,46 @@ fun AddExpenseScreen(
                     val isUsed = entry.title.isNotBlank() || entry.amount.isNotBlank()
                     val isValid = entry.title.isNotBlank() && entry.amount.isNotBlank() && (entry.amount.toDoubleOrNull() ?: 0.0) > 0
 
+                    // Premium Glassmorphic Card
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .expenseGlassmorphicCard(
-                                if (isValid) WealthTheme.Emerald
-                                else WealthTheme.SoftWhite.copy(alpha = 0.3f),
-                                14
+                            .shadow(
+                                if (isValid) 12.dp else 4.dp,
+                                RoundedCornerShape(20.dp),
+                                ambientColor = if (isValid) WealthTheme.Emerald.copy(alpha = 0.3f) else Color.Black.copy(alpha = 0.2f)
+                            )
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = if (isValid) listOf(
+                                        WealthTheme.Emerald.copy(alpha = 0.15f),
+                                        WealthTheme.Emerald.copy(alpha = 0.05f),
+                                        Color.White.copy(alpha = 0.02f)
+                                    ) else listOf(
+                                        Color.White.copy(alpha = 0.08f),
+                                        Color.White.copy(alpha = 0.04f),
+                                        Color.White.copy(alpha = 0.02f)
+                                    )
+                                )
+                            )
+                            .border(
+                                1.dp,
+                                Brush.verticalGradient(
+                                    listOf(
+                                        if (isValid) WealthTheme.Emerald.copy(alpha = 0.5f) else Color.White.copy(alpha = 0.15f),
+                                        if (isValid) WealthTheme.Emerald.copy(alpha = 0.1f) else Color.White.copy(alpha = 0.05f)
+                                    )
+                                ),
+                                RoundedCornerShape(20.dp)
                             )
                     ) {
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(12.dp)
+                                .padding(20.dp)
                         ) {
-                            // Row number and remove button
+                            // Header row with number badge, status and remove button
                             Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -571,101 +756,135 @@ fun AddExpenseScreen(
                             ) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
+                                    // Premium number badge with glow
                                     Box(
                                         modifier = Modifier
-                                            .size(24.dp)
+                                            .size(36.dp)
+                                            .shadow(
+                                                if (isValid) 8.dp else 0.dp,
+                                                CircleShape,
+                                                ambientColor = WealthTheme.Emerald.copy(alpha = 0.4f)
+                                            )
                                             .clip(CircleShape)
                                             .background(
-                                                if (isValid) WealthTheme.Emerald
-                                                else WealthTheme.SoftWhite.copy(alpha = 0.2f)
+                                                if (isValid)
+                                                    Brush.radialGradient(
+                                                        colors = listOf(WealthTheme.Emerald, WealthTheme.Emerald.copy(alpha = 0.8f))
+                                                    )
+                                                else
+                                                    Brush.radialGradient(
+                                                        colors = listOf(
+                                                            WealthTheme.SoftWhite.copy(alpha = 0.15f),
+                                                            WealthTheme.SoftWhite.copy(alpha = 0.08f)
+                                                        )
+                                                    )
+                                            )
+                                            .border(
+                                                1.dp,
+                                                if (isValid) WealthTheme.Emerald.copy(alpha = 0.5f)
+                                                else WealthTheme.SoftWhite.copy(alpha = 0.1f),
+                                                CircleShape
                                             ),
                                         contentAlignment = Alignment.Center
                                     ) {
                                         Text(
                                             "${index + 1}",
-                                            style = MaterialTheme.typography.labelSmall,
+                                            fontSize = 14.sp,
                                             fontWeight = FontWeight.Bold,
-                                            color = if (isValid) Color.White else WealthTheme.SoftWhite
+                                            color = if (isValid) Color.White else WealthTheme.SoftWhite.copy(alpha = 0.6f)
                                         )
+                                    }
+
+                                    // Status indicator
+                                    Column {
+                                        Text(
+                                            if (isValid) "Ready to save" else "Enter details",
+                                            fontSize = 13.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = if (isValid) WealthTheme.Emerald else WealthTheme.SoftWhite.copy(alpha = 0.6f)
+                                        )
+                                        if (isValid) {
+                                            Text(
+                                                formatCurrency(entry.amount.toDoubleOrNull() ?: 0.0),
+                                                fontSize = 11.sp,
+                                                color = WealthTheme.SoftWhite.copy(alpha = 0.5f)
+                                            )
+                                        }
                                     }
                                 }
 
-                                if (expenseEntries.size > 1 && !isUsed) {
-                                    IconButton(
-                                        onClick = {
-                                            expenseEntries = expenseEntries.toMutableList().also {
-                                                it.removeAt(index)
-                                            }
-                                        },
-                                        modifier = Modifier.size(28.dp)
+                                // Delete button
+                                if (expenseEntries.size > 1) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .clip(CircleShape)
+                                            .background(WealthTheme.MutedRed.copy(alpha = 0.1f))
+                                            .border(1.dp, WealthTheme.MutedRed.copy(alpha = 0.2f), CircleShape)
+                                            .clickable {
+                                                expenseEntries = expenseEntries.toMutableList().also {
+                                                    it.removeAt(index)
+                                                }
+                                            },
+                                        contentAlignment = Alignment.Center
                                     ) {
                                         Icon(
                                             Icons.Default.Close,
                                             contentDescription = "Remove",
-                                            tint = WealthTheme.SoftWhite.copy(alpha = 0.5f),
-                                            modifier = Modifier.size(16.dp)
+                                            tint = WealthTheme.MutedRed,
+                                            modifier = Modifier.size(18.dp)
                                         )
                                     }
                                 }
                             }
 
-                            Spacer(modifier = Modifier.height(8.dp))
+                            Spacer(modifier = Modifier.height(20.dp))
 
-                            // Title and Amount row
-                            Row(
+                            // Expense Title - Premium input
+                            OutlinedTextField(
+                                value = entry.title,
+                                onValueChange = { newTitle ->
+                                    expenseEntries = expenseEntries.toMutableList().also {
+                                        it[index] = entry.copy(title = newTitle)
+                                    }
+                                },
+                                label = { Text("Expense Title", color = WealthTheme.SoftWhite.copy(alpha = 0.5f)) },
+                                placeholder = { Text("e.g., Groceries, Electricity", color = WealthTheme.SoftWhite.copy(alpha = 0.3f)) },
+                                leadingIcon = {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(28.dp)
+                                            .clip(RoundedCornerShape(8.dp))
+                                            .background(WealthTheme.Emerald.copy(alpha = 0.1f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Receipt,
+                                            null,
+                                            tint = WealthTheme.Emerald,
+                                            modifier = Modifier.size(16.dp)
+                                        )
+                                    }
+                                },
                                 modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                OutlinedTextField(
-                                    value = entry.title,
-                                    onValueChange = { newTitle ->
-                                        expenseEntries = expenseEntries.toMutableList().also {
-                                            it[index] = entry.copy(title = newTitle)
-                                        }
-                                    },
-                                    label = { Text("Title", color = WealthTheme.SoftWhite.copy(alpha = 0.6f)) },
-                                    modifier = Modifier.weight(1f),
-                                    singleLine = true,
-                                    colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = WealthTheme.Emerald,
-                                        unfocusedBorderColor = WealthTheme.SoftWhite.copy(alpha = 0.3f),
-                                        focusedTextColor = WealthTheme.SoftWhite,
-                                        unfocusedTextColor = WealthTheme.SoftWhite,
-                                        cursorColor = WealthTheme.Emerald
-                                    ),
-                                    shape = RoundedCornerShape(10.dp),
-                                    textStyle = MaterialTheme.typography.bodyMedium
-                                )
+                                singleLine = true,
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = WealthTheme.Emerald,
+                                    unfocusedBorderColor = WealthTheme.SoftWhite.copy(alpha = 0.15f),
+                                    focusedTextColor = WealthTheme.SoftWhite,
+                                    unfocusedTextColor = WealthTheme.SoftWhite,
+                                    cursorColor = WealthTheme.Emerald,
+                                    focusedContainerColor = Color.White.copy(alpha = 0.03f),
+                                    unfocusedContainerColor = Color.Transparent
+                                ),
+                                shape = RoundedCornerShape(14.dp)
+                            )
 
-                                OutlinedTextField(
-                                    value = entry.amount,
-                                    onValueChange = { newAmount ->
-                                        expenseEntries = expenseEntries.toMutableList().also {
-                                            it[index] = entry.copy(amount = newAmount.filter { c -> c.isDigit() || c == '.' })
-                                        }
-                                    },
-                                    label = { Text("Amount", color = WealthTheme.SoftWhite.copy(alpha = 0.6f)) },
-                                    prefix = { Text("$", color = WealthTheme.Emerald) },
-                                    modifier = Modifier.weight(0.7f),
-                                    singleLine = true,
-                                    colors = OutlinedTextFieldDefaults.colors(
-                                        focusedBorderColor = WealthTheme.Emerald,
-                                        unfocusedBorderColor = WealthTheme.SoftWhite.copy(alpha = 0.3f),
-                                        focusedTextColor = WealthTheme.SoftWhite,
-                                        unfocusedTextColor = WealthTheme.SoftWhite,
-                                        cursorColor = WealthTheme.Emerald
-                                    ),
-                                    shape = RoundedCornerShape(10.dp),
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                    textStyle = MaterialTheme.typography.bodyMedium
-                                )
-                            }
+                            Spacer(modifier = Modifier.height(14.dp))
 
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            // Category dropdown
+                            // Category dropdown - Premium style
                             ExposedDropdownMenuBox(
                                 expanded = entry.categoryExpanded,
                                 onExpandedChange = { expanded ->
@@ -678,19 +897,36 @@ fun AddExpenseScreen(
                                     value = "${entry.category.icon} ${entry.category.displayName}",
                                     onValueChange = {},
                                     readOnly = true,
-                                    label = { Text("Category", color = WealthTheme.SoftWhite.copy(alpha = 0.6f)) },
+                                    label = { Text("Category", color = WealthTheme.SoftWhite.copy(alpha = 0.5f)) },
+                                    leadingIcon = {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(28.dp)
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .background(WealthTheme.Gold.copy(alpha = 0.1f)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Category,
+                                                null,
+                                                tint = WealthTheme.Gold,
+                                                modifier = Modifier.size(16.dp)
+                                            )
+                                        }
+                                    },
                                     trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = entry.categoryExpanded) },
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .menuAnchor(MenuAnchorType.PrimaryNotEditable),
                                     colors = OutlinedTextFieldDefaults.colors(
                                         focusedBorderColor = WealthTheme.Emerald,
-                                        unfocusedBorderColor = WealthTheme.SoftWhite.copy(alpha = 0.3f),
+                                        unfocusedBorderColor = WealthTheme.SoftWhite.copy(alpha = 0.15f),
                                         focusedTextColor = WealthTheme.SoftWhite,
-                                        unfocusedTextColor = WealthTheme.SoftWhite
+                                        unfocusedTextColor = WealthTheme.SoftWhite,
+                                        focusedContainerColor = Color.White.copy(alpha = 0.03f),
+                                        unfocusedContainerColor = Color.Transparent
                                     ),
-                                    shape = RoundedCornerShape(10.dp),
-                                    textStyle = MaterialTheme.typography.bodyMedium
+                                    shape = RoundedCornerShape(14.dp)
                                 )
                                 ExposedDropdownMenu(
                                     expanded = entry.categoryExpanded,
@@ -713,78 +949,255 @@ fun AddExpenseScreen(
                                 }
                             }
 
-                            // Utility expense checkbox
-                            Row(
-                                modifier = Modifier.padding(top = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Checkbox(
-                                    checked = entry.isUtilityExpense,
-                                    onCheckedChange = { checked ->
+                            Spacer(modifier = Modifier.height(14.dp))
+
+                            // Variable Utility Toggle - Premium Card
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(
+                                        if (entry.isUtilityExpense)
+                                            Brush.horizontalGradient(
+                                                colors = listOf(
+                                                    WealthTheme.Amber.copy(alpha = 0.15f),
+                                                    WealthTheme.Amber.copy(alpha = 0.08f)
+                                                )
+                                            )
+                                        else
+                                            Brush.horizontalGradient(
+                                                colors = listOf(
+                                                    Color.White.copy(alpha = 0.05f),
+                                                    Color.White.copy(alpha = 0.02f)
+                                                )
+                                            )
+                                    )
+                                    .border(
+                                        1.dp,
+                                        if (entry.isUtilityExpense) WealthTheme.Amber.copy(alpha = 0.3f)
+                                        else WealthTheme.SoftWhite.copy(alpha = 0.1f),
+                                        RoundedCornerShape(14.dp)
+                                    )
+                                    .clickable {
+                                        val newChecked = !entry.isUtilityExpense
                                         expenseEntries = expenseEntries.toMutableList().also {
-                                            it[index] = entry.copy(isUtilityExpense = checked)
+                                            it[index] = entry.copy(isUtilityExpense = newChecked)
                                         }
-                                        if (checked && entry.title.isNotBlank()) {
+                                        if (newChecked && entry.title.isNotBlank()) {
                                             showUtilityCalculator = index
                                         }
-                                    },
-                                    colors = CheckboxDefaults.colors(
-                                        checkedColor = WealthTheme.Emerald,
-                                        uncheckedColor = WealthTheme.SoftWhite.copy(alpha = 0.5f)
-                                    ),
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text(
-                                    "Variable utility",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = WealthTheme.SoftWhite.copy(alpha = 0.7f)
-                                )
-                                if (entry.isUtilityExpense && entry.title.isNotBlank()) {
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    TextButton(
-                                        onClick = { showUtilityCalculator = index },
-                                        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                                    }
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(14.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                                     ) {
-                                        Icon(
-                                            Icons.Default.Calculate,
-                                            contentDescription = null,
-                                            modifier = Modifier.size(14.dp),
-                                            tint = WealthTheme.Emerald
+                                        Box(
+                                            modifier = Modifier
+                                                .size(36.dp)
+                                                .clip(RoundedCornerShape(10.dp))
+                                                .background(
+                                                    if (entry.isUtilityExpense) WealthTheme.Amber.copy(alpha = 0.2f)
+                                                    else WealthTheme.SoftWhite.copy(alpha = 0.08f)
+                                                ),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Calculate,
+                                                null,
+                                                tint = if (entry.isUtilityExpense) WealthTheme.Amber else WealthTheme.SoftWhite.copy(alpha = 0.5f),
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                        Column {
+                                            Text(
+                                                "Variable Utility",
+                                                fontSize = 14.sp,
+                                                fontWeight = FontWeight.SemiBold,
+                                                color = if (entry.isUtilityExpense) WealthTheme.Amber else WealthTheme.SoftWhite.copy(alpha = 0.7f)
+                                            )
+                                            Text(
+                                                "Calculate from meter readings",
+                                                fontSize = 11.sp,
+                                                color = WealthTheme.SoftWhite.copy(alpha = 0.4f)
+                                            )
+                                        }
+                                    }
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        if (entry.isUtilityExpense && entry.title.isNotBlank()) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .clip(RoundedCornerShape(8.dp))
+                                                    .background(WealthTheme.Amber.copy(alpha = 0.2f))
+                                                    .clickable { showUtilityCalculator = index }
+                                                    .padding(horizontal = 10.dp, vertical = 6.dp)
+                                            ) {
+                                                Text(
+                                                    "Calculate",
+                                                    fontSize = 11.sp,
+                                                    fontWeight = FontWeight.Medium,
+                                                    color = WealthTheme.Amber
+                                                )
+                                            }
+                                        }
+                                        Switch(
+                                            checked = entry.isUtilityExpense,
+                                            onCheckedChange = { checked ->
+                                                expenseEntries = expenseEntries.toMutableList().also {
+                                                    it[index] = entry.copy(isUtilityExpense = checked)
+                                                }
+                                                if (checked && entry.title.isNotBlank()) {
+                                                    showUtilityCalculator = index
+                                                }
+                                            },
+                                            colors = SwitchDefaults.colors(
+                                                checkedThumbColor = WealthTheme.Amber,
+                                                checkedTrackColor = WealthTheme.Amber.copy(alpha = 0.3f),
+                                                uncheckedThumbColor = WealthTheme.SoftWhite.copy(alpha = 0.5f),
+                                                uncheckedTrackColor = WealthTheme.SoftWhite.copy(alpha = 0.1f)
+                                            ),
+                                            modifier = Modifier.scale(0.85f)
                                         )
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text("Calculate", fontSize = 12.sp, color = WealthTheme.Emerald)
                                     }
                                 }
                             }
+
+                            Spacer(modifier = Modifier.height(14.dp))
+
+                            // Amount field - Premium Hero Style
+                            OutlinedTextField(
+                                value = entry.amount,
+                                onValueChange = { newAmount ->
+                                    expenseEntries = expenseEntries.toMutableList().also {
+                                        it[index] = entry.copy(amount = newAmount.filter { c -> c.isDigit() || c == '.' })
+                                    }
+                                },
+                                label = { Text("Amount", color = WealthTheme.SoftWhite.copy(alpha = 0.5f)) },
+                                placeholder = { Text("0.00", color = WealthTheme.SoftWhite.copy(alpha = 0.3f)) },
+                                leadingIcon = {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(36.dp)
+                                            .shadow(4.dp, CircleShape, ambientColor = WealthTheme.Emerald.copy(alpha = 0.3f))
+                                            .clip(CircleShape)
+                                            .background(
+                                                Brush.radialGradient(
+                                                    colors = listOf(
+                                                        WealthTheme.Emerald.copy(alpha = 0.2f),
+                                                        WealthTheme.Emerald.copy(alpha = 0.1f)
+                                                    )
+                                                )
+                                            )
+                                            .border(1.dp, WealthTheme.Emerald.copy(alpha = 0.3f), CircleShape),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            "$",
+                                            color = WealthTheme.Emerald,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 18.sp
+                                        )
+                                    }
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                singleLine = true,
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = WealthTheme.Emerald,
+                                    unfocusedBorderColor = WealthTheme.SoftWhite.copy(alpha = 0.15f),
+                                    focusedTextColor = WealthTheme.SoftWhite,
+                                    unfocusedTextColor = WealthTheme.SoftWhite,
+                                    cursorColor = WealthTheme.Emerald,
+                                    focusedContainerColor = Color.White.copy(alpha = 0.03f),
+                                    unfocusedContainerColor = Color.Transparent
+                                ),
+                                shape = RoundedCornerShape(14.dp),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                                textStyle = MaterialTheme.typography.titleLarge.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 1.sp
+                                )
+                            )
                         }
                     }
                 }
 
-                // Total summary
+                // Premium Total Summary Card
                 if (validEntries.isNotEmpty()) {
                     item {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .expenseGlassmorphicCard(WealthTheme.Gold, 14)
+                                .shadow(16.dp, RoundedCornerShape(20.dp), ambientColor = WealthTheme.Gold.copy(alpha = 0.3f))
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(
+                                    brush = Brush.horizontalGradient(
+                                        colors = listOf(
+                                            WealthTheme.Gold.copy(alpha = 0.2f),
+                                            WealthTheme.Amber.copy(alpha = 0.15f),
+                                            WealthTheme.Gold.copy(alpha = 0.1f)
+                                        )
+                                    )
+                                )
+                                .border(
+                                    1.dp,
+                                    Brush.horizontalGradient(
+                                        listOf(WealthTheme.Gold.copy(alpha = 0.5f), WealthTheme.Amber.copy(alpha = 0.3f))
+                                    ),
+                                    RoundedCornerShape(20.dp)
+                                )
                         ) {
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(16.dp),
+                                    .padding(20.dp),
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(44.dp)
+                                            .clip(CircleShape)
+                                            .background(WealthTheme.Gold.copy(alpha = 0.2f)),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Savings,
+                                            null,
+                                            tint = WealthTheme.Gold,
+                                            modifier = Modifier.size(24.dp)
+                                        )
+                                    }
+                                    Column {
+                                        Text(
+                                            "Total",
+                                            fontSize = 12.sp,
+                                            color = WealthTheme.SoftWhite.copy(alpha = 0.6f)
+                                        )
+                                        Text(
+                                            "${validEntries.size} item${if (validEntries.size > 1) "s" else ""}",
+                                            fontSize = 14.sp,
+                                            fontWeight = FontWeight.Medium,
+                                            color = WealthTheme.SoftWhite
+                                        )
+                                    }
+                                }
                                 Text(
-                                    "Total (${validEntries.size} items)",
-                                    style = MaterialTheme.typography.titleMedium,
-                                    fontWeight = FontWeight.Bold,
-                                    color = WealthTheme.SoftWhite
-                                )
-                                Text(
-                                    formatCurrency(validEntries.sumOf { it.amount.toDoubleOrNull() ?: 0.0 }),
-                                    style = MaterialTheme.typography.titleLarge,
+                                    formatCurrency(totalAmount),
+                                    style = MaterialTheme.typography.headlineSmall,
                                     fontWeight = FontWeight.Bold,
                                     color = WealthTheme.Gold
                                 )
@@ -793,15 +1206,24 @@ fun AddExpenseScreen(
                     }
                 }
 
-                item { Spacer(modifier = Modifier.height(80.dp)) }
+                item { Spacer(modifier = Modifier.height(120.dp)) }
             }
 
-            // Save Button
+            // Premium Save Button - moved up to avoid phone navigation buttons
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(WealthTheme.Navy)
-                    .padding(20.dp)
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color(0xFF0A1628).copy(alpha = 0.95f),
+                                Color(0xFF0A1628)
+                            )
+                        )
+                    )
+                    .padding(horizontal = 20.dp)
+                    .padding(top = 16.dp, bottom = 32.dp) // Extra bottom padding
             ) {
                 Button(
                     onClick = {
@@ -820,20 +1242,26 @@ fun AddExpenseScreen(
                     },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(56.dp),
+                        .height(56.dp)
+                        .shadow(
+                            if (validEntries.isNotEmpty()) 12.dp else 0.dp,
+                            RoundedCornerShape(16.dp),
+                            ambientColor = WealthTheme.Emerald.copy(alpha = 0.4f)
+                        ),
                     enabled = validEntries.isNotEmpty(),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = WealthTheme.Emerald,
-                        disabledContainerColor = WealthTheme.SoftWhite.copy(alpha = 0.2f)
+                        disabledContainerColor = WealthTheme.SoftWhite.copy(alpha = 0.15f)
                     ),
                     shape = RoundedCornerShape(16.dp)
                 ) {
-                    Icon(Icons.Default.Check, contentDescription = null)
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Icon(Icons.Default.Check, contentDescription = null, modifier = Modifier.size(22.dp))
+                    Spacer(modifier = Modifier.width(10.dp))
                     Text(
                         if (validEntries.isEmpty()) "Add at least one expense"
-                        else "Save ${validEntries.size} Expense${if (validEntries.size > 1) "s" else ""}",
-                        fontWeight = FontWeight.Bold
+                        else "Save ${validEntries.size} Expense${if (validEntries.size > 1) "s" else ""} • ${formatCurrency(totalAmount)}",
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 15.sp
                     )
                 }
             }

@@ -1,5 +1,6 @@
 package com.example.budgie.ui.components
 
+import android.content.Context
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -18,10 +19,12 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.budgie.data.model.*
+import com.example.budgie.data.preferences.CurrencyManager
 import com.example.budgie.ui.theme.*
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
@@ -672,6 +675,24 @@ fun CategoryBudgetProgress(
 fun formatCurrency(amount: Double): String {
     val format = NumberFormat.getCurrencyInstance(Locale.US)
     return format.format(amount)
+}
+
+// Currency formatting with CurrencyManager (use this when context is available)
+fun formatCurrencyWithSymbol(amount: Double, context: Context): String {
+    val currencyManager = CurrencyManager.getInstance(context)
+    return currencyManager.formatAmount(amount)
+}
+
+// Composable currency formatter
+@Composable
+fun rememberCurrencyFormatter(): (Double) -> String {
+    val context = LocalContext.current
+    val currencyManager = remember { CurrencyManager.getInstance(context) }
+    val currency by currencyManager.currentCurrency.collectAsState()
+
+    return remember(currency) {
+        { amount: Double -> "${currency.symbol}${"%.2f".format(amount)}" }
+    }
 }
 
 fun formatDate(timestamp: Long): String {

@@ -7,6 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import com.example.budgie.data.model.Bill
 import com.example.budgie.data.model.Budget
+import com.example.budgie.data.model.BudgieNotification
 import com.example.budgie.data.model.Expense
 import com.example.budgie.data.model.FinancialGoal
 import com.example.budgie.data.model.GoalContribution
@@ -16,6 +17,19 @@ import com.example.budgie.data.model.LoanPayment
 import com.example.budgie.data.model.UtilityReading
 import com.example.budgie.data.model.ShoppingList
 import com.example.budgie.data.model.ShoppingItem
+// New notification entities
+import com.example.budgie.data.model.AppNotification
+import com.example.budgie.data.model.BillNotificationDetail
+import com.example.budgie.data.model.BudgetNotificationDetail
+import com.example.budgie.data.model.GoalNotificationDetail
+import com.example.budgie.data.model.LoanNotificationDetail
+import com.example.budgie.data.model.ExpenseNotificationDetail
+import com.example.budgie.data.model.IncomeNotificationDetail
+import com.example.budgie.data.model.SecurityNotificationDetail
+import com.example.budgie.data.model.SystemNotificationDetail
+import com.example.budgie.data.model.ShoppingNotificationDetail
+import com.example.budgie.data.model.InvestmentNotificationDetail
+import com.example.budgie.data.model.InsightNotificationDetail
 
 @Database(
     entities = [
@@ -29,9 +43,23 @@ import com.example.budgie.data.model.ShoppingItem
         Loan::class,
         LoanPayment::class,
         ShoppingList::class,
-        ShoppingItem::class
+        ShoppingItem::class,
+        BudgieNotification::class,
+        // Notification entities
+        AppNotification::class,
+        BillNotificationDetail::class,
+        BudgetNotificationDetail::class,
+        GoalNotificationDetail::class,
+        LoanNotificationDetail::class,
+        ExpenseNotificationDetail::class,
+        IncomeNotificationDetail::class,
+        SecurityNotificationDetail::class,
+        SystemNotificationDetail::class,
+        ShoppingNotificationDetail::class,
+        InvestmentNotificationDetail::class,
+        InsightNotificationDetail::class
     ],
-    version = 4,
+    version = 6,
     exportSchema = false
 )
 @TypeConverters(Converters::class)
@@ -44,6 +72,8 @@ abstract class BudgieDatabase : RoomDatabase() {
     abstract fun goalDao(): GoalDao
     abstract fun loanDao(): LoanDao
     abstract fun shoppingDao(): ShoppingDao
+    abstract fun notificationDao(): NotificationDao
+    abstract fun appNotificationDao(): AppNotificationDao
 
     companion object {
         @Volatile

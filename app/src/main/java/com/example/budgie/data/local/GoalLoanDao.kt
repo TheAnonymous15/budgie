@@ -62,6 +62,12 @@ interface GoalDao {
 
     @Query("SELECT SUM(currentAmount) FROM goals WHERE isCompleted = 0")
     fun getTotalCurrentAmount(): Flow<Double?>
+
+    @Query("DELETE FROM goals")
+    suspend fun deleteAll()
+
+    @Query("DELETE FROM goal_contributions")
+    suspend fun deleteAllContributions()
 }
 
 @Dao
@@ -131,5 +137,11 @@ interface LoanDao {
 
     @Query("SELECT * FROM loans WHERE status = 'ACTIVE' ORDER BY nextPaymentDate ASC LIMIT 1")
     fun getNextDueLoan(): Flow<Loan?>
+
+    @Query("DELETE FROM loans")
+    suspend fun deleteAll()
+
+    @Query("DELETE FROM loan_payments")
+    suspend fun deleteAllPayments()
 }
 

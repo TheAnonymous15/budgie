@@ -1,11 +1,17 @@
 package com.example.budgie.ui.screens
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+import android.telephony.SubscriptionManager
+import android.telephony.TelephonyManager
 import android.widget.Toast
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -47,6 +53,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import com.example.budgie.data.model.*
 import com.itextpdf.kernel.colors.ColorConstants
@@ -58,7 +65,12 @@ import com.itextpdf.layout.element.Cell
 import com.itextpdf.layout.element.Paragraph
 import com.itextpdf.layout.element.Table
 import com.itextpdf.layout.properties.TextAlignment
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import com.itextpdf.layout.properties.UnitValue
+import com.example.budgie.mpesa.MpesaRepository
 import java.io.File
 import java.io.FileOutputStream
 import java.io.FileWriter
@@ -946,7 +958,7 @@ private fun calculateLoanCompletionProbability(
     return probability.coerceIn(0.05f, 0.98f)
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AddLoanDialog(
     onDismiss: () -> Unit,
@@ -957,12 +969,24 @@ private fun AddLoanDialog(
 ) {
     var title by remember { mutableStateOf("") }
     var lenderName by remember { mutableStateOf("") }
+    var customLenderName by remember { mutableStateOf("") }
+    var customPaybill by remember { mutableStateOf("") }
     var principalAmount by remember { mutableStateOf("") }
     var interestRate by remember { mutableStateOf("") }
     var selectedLoanType by remember { mutableStateOf(LoanType.PERSONAL) }
     var selectedInterestType by remember { mutableStateOf(InterestType.REDUCING_BALANCE) }
     var loanTermMonths by remember { mutableStateOf("12") }
     var fees by remember { mutableStateOf("") }
+    var loanAccountNumber by remember { mutableStateOf("") }
+
+    // Dropdown states
+    var selectedLenderCategory by remember { mutableStateOf<LenderCategory?>(null) }
+    var selectedLender by remember { mutableStateOf<KenyanLender?>(null) }
+    var showCategoryDropdown by remember { mutableStateOf(false) }
+    var showLenderDropdown by remember { mutableStateOf(false) }
+    var showLoanTypeDropdown by remember { mutableStateOf(false) }
+    var showInterestTypeDropdown by remember { mutableStateOf(false) }
+    var isOtherLender by remember { mutableStateOf(false) }
 
     // Auto-calculated values
     val principal = principalAmount.toDoubleOrNull() ?: 0.0
@@ -979,7 +1003,6 @@ private fun AddLoanDialog(
     val monthlyInstallment = calculateEMI(principal, rate, months, selectedInterestType)
     val totalPayable = principal + totalInterest + loanFees
 
-    // Probability calculation
     val completionProbability = calculateLoanCompletionProbability(
         monthlyInstallment = monthlyInstallment,
         monthlyIncome = monthlyIncome,
@@ -988,34 +1011,40 @@ private fun AddLoanDialog(
         loanTermMonths = months
     )
 
+    // Get lenders for selected category + Other option
+    val lendersInCategory = remember(selectedLenderCategory) {
+        if (selectedLenderCategory != null &&
+            selectedLenderCategory != LenderCategory.EMPLOYER &&
+            selectedLenderCategory != LenderCategory.FAMILY_FRIENDS &&
+            selectedLenderCategory != LenderCategory.OTHER) {
+            KenyanLenders.getLendersByCategory(selectedLenderCategory!!) +
+            listOf(KenyanLender("Other (Enter manually)", "Other", selectedLenderCategory!!, "", "", "📋"))
+        } else emptyList()
+    }
+
+    val textFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedTextColor = WealthSoftWhite,
+        unfocusedTextColor = WealthSoftWhite,
+        focusedBorderColor = WealthBlue,
+        unfocusedBorderColor = WealthSoftWhite.copy(alpha = 0.3f),
+        focusedLabelColor = WealthBlue,
+        unfocusedLabelColor = WealthSoftWhite.copy(alpha = 0.5f),
+        cursorColor = WealthBlue,
+        focusedPlaceholderColor = WealthSoftWhite.copy(alpha = 0.3f),
+        unfocusedPlaceholderColor = WealthSoftWhite.copy(alpha = 0.3f)
+    )
+
     Dialog(onDismissRequest = onDismiss) {
-        // Glassmorphic Dialog Container
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(0.88f)
-                .glassmorphicCard(28, 1.5f)
+                .fillMaxHeight(0.9f)
+                .clip(RoundedCornerShape(20.dp))
+                .background(WealthNavy)
         ) {
-            // Inner gradient overlay
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        brush = Brush.verticalGradient(
-                            colors = listOf(
-                                WealthNavy.copy(alpha = 0.95f),
-                                WealthNavyLight.copy(alpha = 0.9f),
-                                WealthNavy.copy(alpha = 0.95f)
-                            )
-                        )
-                    )
-            )
-
             LazyColumn(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(20.dp),
-                verticalArrangement = Arrangement.spacedBy(14.dp)
+                modifier = Modifier.fillMaxWidth().padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 // Header
                 item {
@@ -1025,386 +1054,306 @@ private fun AddLoanDialog(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(
-                                        brush = Brush.linearGradient(
-                                            colors = listOf(WealthBlue, WealthCyan)
-                                        )
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    Icons.Default.AccountBalance,
-                                    contentDescription = null,
-                                    tint = Color.White,
-                                    modifier = Modifier.size(22.dp)
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Column {
-                                Text(
-                                    "Add New Loan",
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    color = WealthSoftWhite
-                                )
-                                Text(
-                                    "Track your borrowings",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = WealthSoftWhite.copy(alpha = 0.5f)
+                            Icon(Icons.Default.AccountBalance, null, tint = WealthBlue, modifier = Modifier.size(28.dp))
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text("Add New Loan", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = WealthSoftWhite)
+                        }
+                        IconButton(onClick = onDismiss, modifier = Modifier.size(28.dp)) {
+                            Icon(Icons.Default.Close, null, tint = WealthSoftWhite.copy(alpha = 0.6f))
+                        }
+                    }
+                }
+
+                // Loan Name
+                item {
+                    OutlinedTextField(
+                        value = title,
+                        onValueChange = { title = it },
+                        label = { Text("Loan Name") },
+                        placeholder = { Text("e.g., Car Loan") },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = textFieldColors,
+                        singleLine = true
+                    )
+                }
+
+                // Lender Category Dropdown
+                item {
+                    ExposedDropdownMenuBox(
+                        expanded = showCategoryDropdown,
+                        onExpandedChange = { showCategoryDropdown = it }
+                    ) {
+                        OutlinedTextField(
+                            value = selectedLenderCategory?.displayName ?: "",
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Lender Category") },
+                            placeholder = { Text("Select category") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showCategoryDropdown) },
+                            modifier = Modifier.fillMaxWidth().menuAnchor(),
+                            colors = textFieldColors
+                        )
+                        ExposedDropdownMenu(
+                            expanded = showCategoryDropdown,
+                            onDismissRequest = { showCategoryDropdown = false }
+                        ) {
+                            LenderCategory.entries.forEach { category ->
+                                DropdownMenuItem(
+                                    text = { Text("${category.icon} ${category.displayName}") },
+                                    onClick = {
+                                        selectedLenderCategory = category
+                                        selectedLender = null
+                                        lenderName = ""
+                                        isOtherLender = false
+                                        showCategoryDropdown = false
+                                    }
                                 )
                             }
                         }
-                        IconButton(
-                            onClick = onDismiss,
-                            modifier = Modifier
-                                .size(32.dp)
-                                .clip(CircleShape)
-                                .background(Color.White.copy(alpha = 0.1f))
+                    }
+                }
+
+                // Lender Selection Dropdown
+                if (selectedLenderCategory != null &&
+                    selectedLenderCategory != LenderCategory.EMPLOYER &&
+                    selectedLenderCategory != LenderCategory.FAMILY_FRIENDS &&
+                    selectedLenderCategory != LenderCategory.OTHER) {
+                    item {
+                        ExposedDropdownMenuBox(
+                            expanded = showLenderDropdown,
+                            onExpandedChange = { showLenderDropdown = it }
                         ) {
-                            Icon(
-                                Icons.Default.Close,
-                                contentDescription = "Close",
-                                tint = WealthSoftWhite.copy(alpha = 0.7f),
-                                modifier = Modifier.size(18.dp)
+                            OutlinedTextField(
+                                value = selectedLender?.name ?: "",
+                                onValueChange = {},
+                                readOnly = true,
+                                label = { Text("Select ${selectedLenderCategory?.displayName}") },
+                                placeholder = { Text("Choose lender") },
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showLenderDropdown) },
+                                modifier = Modifier.fillMaxWidth().menuAnchor(),
+                                colors = textFieldColors
+                            )
+                            ExposedDropdownMenu(
+                                expanded = showLenderDropdown,
+                                onDismissRequest = { showLenderDropdown = false },
+                                modifier = Modifier.heightIn(max = 280.dp)
+                            ) {
+                                lendersInCategory.forEach { lender ->
+                                    DropdownMenuItem(
+                                        text = {
+                                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                                Text(lender.shortName)
+                                                if (lender.paybillNumber.isNotEmpty()) {
+                                                    Text(lender.paybillNumber, color = WealthEmerald, fontSize = 12.sp)
+                                                }
+                                            }
+                                        },
+                                        onClick = {
+                                            if (lender.shortName == "Other") {
+                                                isOtherLender = true
+                                                selectedLender = null
+                                                lenderName = ""
+                                            } else {
+                                                selectedLender = lender
+                                                lenderName = lender.name
+                                                isOtherLender = false
+                                            }
+                                            showLenderDropdown = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Custom lender input
+                if (selectedLenderCategory == LenderCategory.EMPLOYER ||
+                    selectedLenderCategory == LenderCategory.FAMILY_FRIENDS ||
+                    selectedLenderCategory == LenderCategory.OTHER || isOtherLender) {
+                    item {
+                        OutlinedTextField(
+                            value = customLenderName,
+                            onValueChange = { customLenderName = it; lenderName = it },
+                            label = { Text(when (selectedLenderCategory) {
+                                LenderCategory.EMPLOYER -> "Employer Name"
+                                LenderCategory.FAMILY_FRIENDS -> "Person's Name"
+                                else -> "Lender Name"
+                            })},
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = textFieldColors,
+                            singleLine = true
+                        )
+                    }
+                    if (isOtherLender || selectedLenderCategory == LenderCategory.OTHER) {
+                        item {
+                            OutlinedTextField(
+                                value = customPaybill,
+                                onValueChange = { customPaybill = it.filter { c -> c.isDigit() } },
+                                label = { Text("Paybill Number (optional)") },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = textFieldColors,
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                             )
                         }
                     }
                 }
 
-                // Loan Name - Glassmorphic Input Card
-                item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .glassmorphicAccentCard(WealthBlue, 14)
-                            .padding(2.dp)
-                    ) {
+                // Paybill info
+                if (selectedLender != null && selectedLender!!.paybillNumber.isNotEmpty()) {
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(8.dp))
+                                .background(WealthEmerald.copy(alpha = 0.15f)).padding(10.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                                Icon(Icons.Default.CheckCircle, null, tint = WealthEmerald, modifier = Modifier.size(16.dp))
+                                Text("Paybill: ${selectedLender!!.paybillNumber}", color = WealthEmerald, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                            }
+                            Text("Auto-detected", color = WealthSoftWhite.copy(alpha = 0.5f), fontSize = 10.sp)
+                        }
+                    }
+                }
+
+                // Loan Account Number
+                if (selectedLender != null || customPaybill.isNotEmpty()) {
+                    item {
                         OutlinedTextField(
-                            value = title,
-                            onValueChange = { title = it },
-                            label = { Text("Loan Name") },
-                            placeholder = { Text("e.g., Car Loan", color = WealthSoftWhite.copy(alpha = 0.3f)) },
+                            value = loanAccountNumber,
+                            onValueChange = { loanAccountNumber = it },
+                            label = { Text("Loan Account Number") },
                             modifier = Modifier.fillMaxWidth(),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = WealthSoftWhite,
-                                unfocusedTextColor = WealthSoftWhite,
-                                focusedBorderColor = Color.Transparent,
-                                unfocusedBorderColor = Color.Transparent,
-                                focusedLabelColor = WealthBlue,
-                                unfocusedLabelColor = WealthSoftWhite.copy(alpha = 0.5f),
-                                cursorColor = WealthBlue
-                            ),
+                            colors = textFieldColors,
                             singleLine = true
                         )
                     }
                 }
 
-                // Lender Name - Glassmorphic Input Card
+                // Loan Type Dropdown
                 item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .glassmorphicCard(14)
-                            .padding(2.dp)
-                    ) {
+                    ExposedDropdownMenuBox(expanded = showLoanTypeDropdown, onExpandedChange = { showLoanTypeDropdown = it }) {
                         OutlinedTextField(
-                            value = lenderName,
-                            onValueChange = { lenderName = it },
-                            label = { Text("Lender Name") },
-                            placeholder = { Text("e.g., ABC Bank", color = WealthSoftWhite.copy(alpha = 0.3f)) },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedTextColor = WealthSoftWhite,
-                                unfocusedTextColor = WealthSoftWhite,
-                                focusedBorderColor = Color.Transparent,
-                                unfocusedBorderColor = Color.Transparent,
-                                cursorColor = WealthBlue
-                            ),
-                            singleLine = true,
-                            leadingIcon = {
-                                Icon(Icons.Default.Business, contentDescription = null, tint = WealthBlue.copy(alpha = 0.7f), modifier = Modifier.size(20.dp))
+                            value = selectedLoanType.displayName,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Loan Type") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showLoanTypeDropdown) },
+                            modifier = Modifier.fillMaxWidth().menuAnchor(),
+                            colors = textFieldColors
+                        )
+                        ExposedDropdownMenu(expanded = showLoanTypeDropdown, onDismissRequest = { showLoanTypeDropdown = false }) {
+                            LoanType.entries.forEach { type ->
+                                DropdownMenuItem(text = { Text(type.displayName) }, onClick = { selectedLoanType = type; showLoanTypeDropdown = false })
                             }
+                        }
+                    }
+                }
+
+                // Principal & Interest Rate
+                item {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        OutlinedTextField(
+                            value = principalAmount,
+                            onValueChange = { principalAmount = it.filter { c -> c.isDigit() || c == '.' } },
+                            label = { Text("Principal (KES)") },
+                            modifier = Modifier.weight(1f),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            colors = textFieldColors,
+                            singleLine = true
+                        )
+                        OutlinedTextField(
+                            value = interestRate,
+                            onValueChange = { interestRate = it.filter { c -> c.isDigit() || c == '.' } },
+                            label = { Text("Interest %") },
+                            modifier = Modifier.weight(1f),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            colors = textFieldColors,
+                            singleLine = true
                         )
                     }
                 }
 
-                // Loan Type - Glassmorphic Section
+                // Interest Type Dropdown
                 item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .glassmorphicCard(14)
-                            .padding(12.dp)
-                    ) {
-                        Column {
-                            Text("Loan Type", style = MaterialTheme.typography.labelMedium, color = WealthSoftWhite.copy(alpha = 0.7f), fontWeight = FontWeight.Medium)
-                            Spacer(modifier = Modifier.height(10.dp))
-                            FlowRow(
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                LoanType.entries.take(6).forEach { type ->
-                                    FilterChip(
-                                        selected = selectedLoanType == type,
-                                        onClick = { selectedLoanType = type },
-                                        label = { Text(type.displayName, fontSize = 11.sp) },
-                                        colors = FilterChipDefaults.filterChipColors(
-                                            selectedContainerColor = WealthBlue,
-                                            selectedLabelColor = Color.White
-                                        )
-                                    )
-                                }
+                    ExposedDropdownMenuBox(expanded = showInterestTypeDropdown, onExpandedChange = { showInterestTypeDropdown = it }) {
+                        OutlinedTextField(
+                            value = selectedInterestType.displayName,
+                            onValueChange = {},
+                            readOnly = true,
+                            label = { Text("Interest Type") },
+                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = showInterestTypeDropdown) },
+                            modifier = Modifier.fillMaxWidth().menuAnchor(),
+                            colors = textFieldColors
+                        )
+                        ExposedDropdownMenu(expanded = showInterestTypeDropdown, onDismissRequest = { showInterestTypeDropdown = false }) {
+                            InterestType.entries.forEach { type ->
+                                DropdownMenuItem(text = { Text(type.displayName) }, onClick = { selectedInterestType = type; showInterestTypeDropdown = false })
                             }
                         }
                     }
                 }
 
-                // Amount and Rate Row - Glassmorphic Cards
+                // Duration & Fees
                 item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .glassmorphicCard(12)
-                                .padding(2.dp)
-                        ) {
-                            OutlinedTextField(
-                                value = principalAmount,
-                                onValueChange = { principalAmount = it.filter { c -> c.isDigit() || c == '.' } },
-                                label = { Text("Principal") },
-                                modifier = Modifier.fillMaxWidth(),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedTextColor = WealthSoftWhite,
-                                    unfocusedTextColor = WealthSoftWhite,
-                                    focusedBorderColor = Color.Transparent,
-                                    unfocusedBorderColor = Color.Transparent,
-                                    cursorColor = WealthBlue
-                                ),
-                                singleLine = true,
-                                leadingIcon = {
-                                    Text("$", color = WealthBlue, fontWeight = FontWeight.Bold)
-                                }
-                            )
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .glassmorphicCard(12)
-                                .padding(2.dp)
-                        ) {
-                            OutlinedTextField(
-                                value = interestRate,
-                                onValueChange = { interestRate = it.filter { c -> c.isDigit() || c == '.' } },
-                                label = { Text("Interest %") },
-                                modifier = Modifier.fillMaxWidth(),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedTextColor = WealthSoftWhite,
-                                    unfocusedTextColor = WealthSoftWhite,
-                                    focusedBorderColor = Color.Transparent,
-                                    unfocusedBorderColor = Color.Transparent,
-                                    cursorColor = WealthAmber
-                                ),
-                                singleLine = true,
-                                trailingIcon = {
-                                    Text("%", color = WealthAmber, fontWeight = FontWeight.Bold)
-                                }
-                            )
-                        }
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        OutlinedTextField(
+                            value = loanTermMonths,
+                            onValueChange = { loanTermMonths = it.filter { c -> c.isDigit() } },
+                            label = { Text("Duration (Months)") },
+                            modifier = Modifier.weight(1f),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            colors = textFieldColors,
+                            singleLine = true
+                        )
+                        OutlinedTextField(
+                            value = fees,
+                            onValueChange = { fees = it.filter { c -> c.isDigit() || c == '.' } },
+                            label = { Text("Fees (KES)") },
+                            modifier = Modifier.weight(1f),
+                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                            colors = textFieldColors,
+                            singleLine = true
+                        )
                     }
                 }
 
-                // Interest Type - Glassmorphic Section
-                item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .glassmorphicCard(14)
-                            .padding(12.dp)
-                    ) {
-                        Column {
-                            Text("Interest Type", style = MaterialTheme.typography.labelMedium, color = WealthSoftWhite.copy(alpha = 0.7f), fontWeight = FontWeight.Medium)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                InterestType.entries.forEach { type ->
-                                    FilterChip(
-                                        selected = selectedInterestType == type,
-                                        onClick = { selectedInterestType = type },
-                                        label = { Text(type.displayName, fontSize = 10.sp) },
-                                        colors = FilterChipDefaults.filterChipColors(
-                                            selectedContainerColor = WealthBlue,
-                                            selectedLabelColor = Color.White
-                                        ),
-                                        modifier = Modifier.weight(1f)
-                                    )
+                // Loan Summary
+                if (principal > 0) {
+                    item {
+                        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = WealthCyan.copy(alpha = 0.1f)), shape = RoundedCornerShape(12.dp)) {
+                            Column(modifier = Modifier.padding(14.dp)) {
+                                Text("Loan Summary", fontWeight = FontWeight.Bold, color = WealthCyan, fontSize = 14.sp)
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text("Monthly Payment:", color = WealthSoftWhite.copy(alpha = 0.7f), fontSize = 13.sp)
+                                    Text("KES ${String.format("%,.2f", monthlyInstallment)}", color = WealthEmerald, fontWeight = FontWeight.Bold, fontSize = 13.sp)
+                                }
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text("Total Interest:", color = WealthSoftWhite.copy(alpha = 0.7f), fontSize = 13.sp)
+                                    Text("KES ${String.format("%,.2f", totalInterest)}", color = WealthAmber, fontSize = 13.sp)
+                                }
+                                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                    Text("Total Payable:", color = WealthSoftWhite.copy(alpha = 0.7f), fontSize = 13.sp)
+                                    Text("KES ${String.format("%,.2f", totalPayable)}", color = WealthMutedRed, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                                 }
                             }
                         }
                     }
-                }
 
-                // Loan Term & Fees - Glassmorphic Cards
-                item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .glassmorphicCard(12)
-                                .padding(2.dp)
-                        ) {
-                            OutlinedTextField(
-                                value = loanTermMonths,
-                                onValueChange = { loanTermMonths = it.filter { c -> c.isDigit() } },
-                                label = { Text("Duration (Months)") },
-                                modifier = Modifier.fillMaxWidth(),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedTextColor = WealthSoftWhite,
-                                    unfocusedTextColor = WealthSoftWhite,
-                                    focusedBorderColor = Color.Transparent,
-                                    unfocusedBorderColor = Color.Transparent,
-                                    cursorColor = WealthBlue
-                                ),
-                                singleLine = true,
-                                trailingIcon = {
-                                    Icon(Icons.Default.CalendarMonth, contentDescription = null, tint = WealthBlue.copy(alpha = 0.7f), modifier = Modifier.size(18.dp))
-                                }
-                            )
-                        }
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .glassmorphicCard(12)
-                                .padding(2.dp)
-                        ) {
-                            OutlinedTextField(
-                                value = fees,
-                                onValueChange = { fees = it.filter { c -> c.isDigit() || c == '.' } },
-                                label = { Text("Fees & Charges") },
-                                modifier = Modifier.fillMaxWidth(),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedTextColor = WealthSoftWhite,
-                                    unfocusedTextColor = WealthSoftWhite,
-                                    focusedBorderColor = Color.Transparent,
-                                    unfocusedBorderColor = Color.Transparent,
-                                    cursorColor = WealthAmber
-                                ),
-                                singleLine = true,
-                                leadingIcon = {
-                                    Text("$", color = WealthAmber, fontWeight = FontWeight.Bold)
-                                }
-                            )
-                        }
-                    }
-                }
-
-                // Auto-Calculated Loan Summary Card
-                item {
-                    if (principal > 0) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .glassmorphicAccentCard(WealthCyan, 16)
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp)
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Icon(
-                                        Icons.Default.Calculate,
-                                        contentDescription = null,
-                                        tint = WealthCyan,
-                                        modifier = Modifier.size(22.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        "Loan Calculation Summary",
-                                        style = MaterialTheme.typography.titleSmall,
-                                        fontWeight = FontWeight.Bold,
-                                        color = WealthSoftWhite
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.height(12.dp))
-
-                                // Calculation Grid
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
+                    if (monthlyIncome > 0) {
+                        item {
+                            val probPercent = (completionProbability * 100).toInt()
+                            val probColor = when { completionProbability >= 0.7f -> WealthEmerald; completionProbability >= 0.5f -> WealthAmber; else -> WealthMutedRed }
+                            Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = probColor.copy(alpha = 0.1f)), shape = RoundedCornerShape(12.dp)) {
+                                Row(modifier = Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Default.Analytics, null, tint = probColor, modifier = Modifier.size(24.dp))
+                                    Spacer(modifier = Modifier.width(10.dp))
                                     Column {
-                                        Text("Principal", style = MaterialTheme.typography.labelSmall, color = WealthSoftWhite.copy(alpha = 0.6f))
-                                        Text("$${String.format("%,.2f", principal)}", color = WealthSoftWhite, fontWeight = FontWeight.Medium)
-                                    }
-                                    Column(horizontalAlignment = Alignment.End) {
-                                        Text("Interest (${selectedInterestType.displayName})", style = MaterialTheme.typography.labelSmall, color = WealthAmber.copy(alpha = 0.8f))
-                                        Text("$${String.format("%,.2f", totalInterest)}", color = WealthAmber, fontWeight = FontWeight.Medium)
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.height(8.dp))
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Column {
-                                        Text("Fees & Charges", style = MaterialTheme.typography.labelSmall, color = WealthSoftWhite.copy(alpha = 0.6f))
-                                        Text("$${String.format("%,.2f", loanFees)}", color = WealthSoftWhite, fontWeight = FontWeight.Medium)
-                                    }
-                                    Column(horizontalAlignment = Alignment.End) {
-                                        Text("Duration", style = MaterialTheme.typography.labelSmall, color = WealthSoftWhite.copy(alpha = 0.6f))
-                                        Text("$months months", color = WealthSoftWhite, fontWeight = FontWeight.Medium)
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.height(12.dp))
-                                HorizontalDivider(color = WealthSoftWhite.copy(alpha = 0.2f))
-                                Spacer(modifier = Modifier.height(12.dp))
-
-                                // Key Results
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Column {
-                                        Text("Monthly Installment", style = MaterialTheme.typography.labelSmall, color = WealthEmerald)
-                                        Text(
-                                            "$${String.format("%,.2f", monthlyInstallment)}",
-                                            style = MaterialTheme.typography.titleMedium,
-                                            color = WealthEmerald,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-                                    Column(horizontalAlignment = Alignment.End) {
-                                        Text("Total Payable", style = MaterialTheme.typography.labelSmall, color = WealthMutedRed)
-                                        Text(
-                                            "$${String.format("%,.2f", totalPayable)}",
-                                            style = MaterialTheme.typography.titleMedium,
-                                            color = WealthMutedRed,
-                                            fontWeight = FontWeight.Bold
-                                        )
+                                        Text("Repayment Probability", color = WealthSoftWhite.copy(alpha = 0.7f), fontSize = 12.sp)
+                                        Text("$probPercent%", color = probColor, fontWeight = FontWeight.Bold, fontSize = 18.sp)
                                     }
                                 }
                             }
@@ -1412,352 +1361,1560 @@ private fun AddLoanDialog(
                     }
                 }
 
-                // Action Buttons - Glassmorphic
+                // Action Buttons
                 item {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        // Cancel Button
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(Color.White.copy(alpha = 0.08f))
-                                .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
-                                .clickable(onClick = onDismiss)
-                                .padding(vertical = 14.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text("Cancel", color = WealthSoftWhite.copy(alpha = 0.8f), fontWeight = FontWeight.Medium)
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        OutlinedButton(onClick = onDismiss, modifier = Modifier.weight(1f), shape = RoundedCornerShape(10.dp), border = BorderStroke(1.dp, WealthSoftWhite.copy(alpha = 0.3f))) {
+                            Text("Cancel", color = WealthSoftWhite.copy(alpha = 0.7f))
                         }
-
-                        // Add Loan Button
-                        Box(
-                            modifier = Modifier
-                                .weight(1f)
-                                .shadow(6.dp, RoundedCornerShape(12.dp), ambientColor = WealthBlue.copy(alpha = 0.3f))
-                                .clip(RoundedCornerShape(12.dp))
-                                .background(
-                                    brush = Brush.horizontalGradient(
-                                        colors = listOf(WealthBlue, WealthCyan)
-                                    )
-                                )
-                                .clickable(enabled = title.isNotBlank() && principalAmount.isNotBlank()) {
-                                    val calendar = Calendar.getInstance()
-                                    val startDate = calendar.timeInMillis
-                                    calendar.add(Calendar.MONTH, 1)
-                                    val nextPayment = calendar.timeInMillis
-                                    calendar.add(Calendar.MONTH, months - 1)
-                                    val endDate = calendar.timeInMillis
-
-                                    val loan = Loan(
-                                        title = title,
-                                        lenderName = lenderName,
-                                        loanType = selectedLoanType,
-                                        principalAmount = principal,
-                                        interestRate = rate,
-                                        interestType = selectedInterestType,
-                                        totalAmount = totalPayable,
-                                        monthlyPayment = monthlyInstallment,
-                                        startDate = startDate,
-                                        endDate = endDate,
-                                        nextPaymentDate = nextPayment
-                                    )
-                                    onConfirm(loan)
-                                }
-                                .padding(vertical = 14.dp),
-                            contentAlignment = Alignment.Center
+                        Button(
+                            onClick = {
+                                val calendar = Calendar.getInstance()
+                                val startDate = calendar.timeInMillis
+                                calendar.add(Calendar.MONTH, 1)
+                                val nextPayment = calendar.timeInMillis
+                                calendar.add(Calendar.MONTH, months - 1)
+                                val endDate = calendar.timeInMillis
+                                val finalLenderName = if (isOtherLender || selectedLenderCategory in listOf(LenderCategory.EMPLOYER, LenderCategory.FAMILY_FRIENDS, LenderCategory.OTHER)) customLenderName else lenderName
+                                val loan = Loan(title = title, lenderName = finalLenderName, loanType = selectedLoanType, principalAmount = principal, interestRate = rate, interestType = selectedInterestType, totalAmount = totalPayable, monthlyPayment = monthlyInstallment, startDate = startDate, endDate = endDate, nextPaymentDate = nextPayment)
+                                onConfirm(loan)
+                            },
+                            enabled = title.isNotBlank() && principalAmount.isNotBlank() && (lenderName.isNotBlank() || customLenderName.isNotBlank()),
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(10.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = WealthBlue)
                         ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(Icons.Default.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(18.dp))
-                                Spacer(modifier = Modifier.width(6.dp))
-                                Text("Add Loan", color = Color.White, fontWeight = FontWeight.Bold)
-                            }
+                            Icon(Icons.Default.Add, null, modifier = Modifier.size(18.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text("Add Loan", fontWeight = FontWeight.Bold)
                         }
                     }
                 }
-
-                // Loan Completion Probability Card
-                item {
-                    if (principal > 0 && monthlyIncome > 0) {
-                        val probabilityPercent = (completionProbability * 100).toInt()
-                        val probabilityColor = when {
-                            completionProbability >= 0.75f -> WealthEmerald
-                            completionProbability >= 0.50f -> WealthAmber
-                            else -> WealthMutedRed
-                        }
-                        val probabilityLabel = when {
-                            completionProbability >= 0.85f -> "Excellent"
-                            completionProbability >= 0.70f -> "Good"
-                            completionProbability >= 0.55f -> "Moderate"
-                            completionProbability >= 0.40f -> "Challenging"
-                            else -> "High Risk"
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .glassmorphicAccentCard(probabilityColor, 16)
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(16.dp)
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier.fillMaxWidth()
-                                ) {
-                                    Icon(
-                                        Icons.Default.Analytics,
-                                        contentDescription = null,
-                                        tint = probabilityColor,
-                                        modifier = Modifier.size(22.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        "AI Repayment Analysis",
-                                        style = MaterialTheme.typography.titleSmall,
-                                        fontWeight = FontWeight.Bold,
-                                        color = WealthSoftWhite
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.height(12.dp))
-
-                                Text(
-                                    "Your likelihood of successfully completing this loan based on your current financial behavior:",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = WealthSoftWhite.copy(alpha = 0.7f)
-                                )
-
-                                Spacer(modifier = Modifier.height(12.dp))
-
-                                // Probability Display
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Column {
-                                        Text(
-                                            "$probabilityPercent%",
-                                            style = MaterialTheme.typography.headlineMedium,
-                                            fontWeight = FontWeight.Bold,
-                                            color = probabilityColor
-                                        )
-                                        Text(
-                                            probabilityLabel,
-                                            style = MaterialTheme.typography.labelMedium,
-                                            color = probabilityColor,
-                                            fontWeight = FontWeight.Medium
-                                        )
-                                    }
-
-                                    // Progress Ring
-                                    Box(contentAlignment = Alignment.Center) {
-                                        CircularProgressIndicator(
-                                            progress = { completionProbability },
-                                            modifier = Modifier.size(56.dp),
-                                            color = probabilityColor,
-                                            trackColor = probabilityColor.copy(alpha = 0.2f),
-                                            strokeWidth = 6.dp
-                                        )
-                                        Icon(
-                                            when {
-                                                completionProbability >= 0.70f -> Icons.Default.CheckCircle
-                                                completionProbability >= 0.50f -> Icons.Default.Info
-                                                else -> Icons.Default.Warning
-                                            },
-                                            contentDescription = null,
-                                            tint = probabilityColor,
-                                            modifier = Modifier.size(24.dp)
-                                        )
-                                    }
-                                }
-
-                                Spacer(modifier = Modifier.height(12.dp))
-
-                                // Factors Analysis
-                                val installmentRatio = if (monthlyIncome > 0) (monthlyInstallment / monthlyIncome * 100).toInt() else 0
-
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(RoundedCornerShape(8.dp))
-                                        .background(Color.Black.copy(alpha = 0.2f))
-                                        .padding(10.dp)
-                                ) {
-                                    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween
-                                        ) {
-                                            Text("Installment to Income:", style = MaterialTheme.typography.labelSmall, color = WealthSoftWhite.copy(alpha = 0.7f))
-                                            Text(
-                                                "$installmentRatio%",
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = if (installmentRatio <= 30) WealthEmerald else if (installmentRatio <= 50) WealthAmber else WealthMutedRed,
-                                                fontWeight = FontWeight.Bold
-                                            )
-                                        }
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween
-                                        ) {
-                                            Text("Your Savings Rate:", style = MaterialTheme.typography.labelSmall, color = WealthSoftWhite.copy(alpha = 0.7f))
-                                            Text(
-                                                "${savingsRate.toInt()}%",
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = if (savingsRate >= 20) WealthEmerald else if (savingsRate >= 10) WealthAmber else WealthMutedRed,
-                                                fontWeight = FontWeight.Bold
-                                            )
-                                        }
-                                        Row(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalArrangement = Arrangement.SpaceBetween
-                                        ) {
-                                            Text("Loan Duration:", style = MaterialTheme.typography.labelSmall, color = WealthSoftWhite.copy(alpha = 0.7f))
-                                            Text(
-                                                "$months months",
-                                                style = MaterialTheme.typography.labelSmall,
-                                                color = if (months <= 24) WealthEmerald else if (months <= 48) WealthAmber else WealthMutedRed,
-                                                fontWeight = FontWeight.Bold
-                                            )
-                                        }
-                                    }
-                                }
-
-                                if (completionProbability < 0.60f) {
-                                    Spacer(modifier = Modifier.height(10.dp))
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Icon(
-                                            Icons.Default.Lightbulb,
-                                            contentDescription = null,
-                                            tint = WealthGold,
-                                            modifier = Modifier.size(16.dp)
-                                        )
-                                        Spacer(modifier = Modifier.width(6.dp))
-                                        Text(
-                                            "Consider extending the loan term or reducing the principal to improve affordability.",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = WealthGold
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    } else if (principal > 0) {
-                        // No income data - show info card
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .glassmorphicCard(14)
-                                .padding(14.dp)
-                        ) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    Icons.Default.Info,
-                                    contentDescription = null,
-                                    tint = WealthBlue,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(10.dp))
-                                Text(
-                                    "Add income data to see your loan completion probability analysis.",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = WealthSoftWhite.copy(alpha = 0.7f)
-                                )
-                            }
-                        }
-                    }
-                }
+                item { Spacer(modifier = Modifier.height(16.dp)) }
             }
         }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AddPaymentDialog(
     loan: Loan,
     onDismiss: () -> Unit,
     onConfirm: (Double, String) -> Unit
 ) {
-    var amount by remember { mutableStateOf(loan.monthlyPayment.toString()) }
+    // Round up to next whole number
+    val roundedMonthlyPayment = kotlin.math.ceil(loan.monthlyPayment).toInt()
+    var amount by remember { mutableStateOf(roundedMonthlyPayment.toString()) }
     var reference by remember { mutableStateOf("") }
+    var accountNumber by remember { mutableStateOf("") }
+    var isProcessingStkPush by remember { mutableStateOf(false) }
+    var stkPushStatus by remember { mutableStateOf<String?>(null) }
+    var selectedPaymentMethod by remember { mutableStateOf(0) } // 0=STK, 1=MPesa, 2=STK Menu
+    var showSimSelector by remember { mutableStateOf(false) }
+    var showPaymentResult by remember { mutableStateOf(false) }
+    var paymentResultSuccess by remember { mutableStateOf(false) }
+    var paymentResultMessage by remember { mutableStateOf("") }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        containerColor = WealthNavy,
-        title = {
-            Text(
-                "Make Payment",
-                color = WealthSoftWhite,
-                fontWeight = FontWeight.Bold
-            )
-        },
-        text = {
-            Column {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val mpesaRepository = remember { MpesaRepository.getInstance() }
+
+    // Get phone numbers from SIM cards
+    val simPhoneNumbers = remember { getSimPhoneNumbers(context) }
+
+    // Auto-populate phone number from SIM (prefer Safaricom for M-Pesa)
+    var phoneNumber by remember {
+        mutableStateOf(
+            simPhoneNumbers.find {
+                it.carrierName?.contains("Safaricom", ignoreCase = true) == true
+            }?.phoneNumber
+            ?: simPhoneNumbers.firstOrNull()?.phoneNumber
+            ?: ""
+        )
+    }
+
+    // Flag to show if phone was auto-detected
+    val isPhoneAutoDetected = remember { simPhoneNumbers.isNotEmpty() }
+
+    // Try to find lender paybill
+    val lenderInfo = remember(loan.lenderName) {
+        KenyanLenders.getLenderByName(loan.lenderName)
+    }
+    val paybillNumber = lenderInfo?.paybillNumber ?: ""
+
+    // Round amount whenever it changes
+    val roundedAmount = remember(amount) {
+        amount.toDoubleOrNull()?.let { kotlin.math.ceil(it).toInt() } ?: 0
+    }
+
+    // Payment Result Dialog
+    if (showPaymentResult) {
+        AlertDialog(
+            onDismissRequest = {
+                showPaymentResult = false
+                if (paymentResultSuccess) onDismiss()
+            },
+            containerColor = WealthNavy,
+            icon = {
+                Box(
+                    modifier = Modifier
+                        .size(72.dp)
+                        .clip(CircleShape)
+                        .background(
+                            if (paymentResultSuccess) WealthEmerald.copy(alpha = 0.2f)
+                            else WealthAmber.copy(alpha = 0.2f)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        if (paymentResultSuccess) Icons.Default.CheckCircle else Icons.Default.Info,
+                        contentDescription = null,
+                        tint = if (paymentResultSuccess) WealthEmerald else WealthAmber,
+                        modifier = Modifier.size(48.dp)
+                    )
+                }
+            },
+            title = {
                 Text(
-                    loan.title,
+                    if (paymentResultSuccess) "STK Push Sent!" else "Action Required",
                     color = WealthSoftWhite,
-                    style = MaterialTheme.typography.titleMedium
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
                 )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    "Remaining: $${String.format("%,.0f", loan.remainingAmount)}",
-                    color = WealthMutedRed,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Spacer(modifier = Modifier.height(16.dp))
-                OutlinedTextField(
-                    value = amount,
-                    onValueChange = { amount = it.filter { c -> c.isDigit() || c == '.' } },
-                    label = { Text("Payment Amount") },
+            },
+            text = {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier.fillMaxWidth(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = WealthSoftWhite,
-                        unfocusedTextColor = WealthSoftWhite,
-                        focusedBorderColor = WealthBlue,
-                        unfocusedBorderColor = WealthSoftWhite.copy(alpha = 0.3f)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        paymentResultMessage,
+                        color = WealthSoftWhite.copy(alpha = 0.8f),
+                        textAlign = TextAlign.Center
+                    )
+                    if (paymentResultSuccess) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(
+                                    WealthEmerald.copy(alpha = 0.1f),
+                                    RoundedCornerShape(10.dp)
+                                )
+                                .padding(14.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Default.PhoneAndroid,
+                                null,
+                                tint = WealthEmerald,
+                                modifier = Modifier.size(24.dp)
+                            )
+                            Column {
+                                Text(
+                                    "Check your phone",
+                                    color = WealthEmerald,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 14.sp
+                                )
+                                Text(
+                                    "Enter your M-Pesa PIN to complete",
+                                    color = WealthSoftWhite.copy(alpha = 0.7f),
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showPaymentResult = false
+                        if (paymentResultSuccess) onDismiss()
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (paymentResultSuccess) WealthEmerald else WealthAmber
                     ),
-                    singleLine = true
-                )
-                Spacer(modifier = Modifier.height(12.dp))
-                OutlinedTextField(
-                    value = reference,
-                    onValueChange = { reference = it },
-                    label = { Text("Reference (optional)") },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedTextColor = WealthSoftWhite,
-                        unfocusedTextColor = WealthSoftWhite,
-                        focusedBorderColor = WealthBlue,
-                        unfocusedBorderColor = WealthSoftWhite.copy(alpha = 0.3f)
-                    ),
-                    singleLine = true
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = { amount.toDoubleOrNull()?.let { onConfirm(it, reference) } },
-                enabled = amount.isNotBlank() && (amount.toDoubleOrNull() ?: 0.0) > 0,
-                colors = ButtonDefaults.buttonColors(containerColor = WealthBlue)
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(if (paymentResultSuccess) "Done" else "OK", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = if (!paymentResultSuccess) {
+                {
+                    OutlinedButton(
+                        onClick = { openMpesaAppForPayment(context) },
+                        border = BorderStroke(1.dp, Color(0xFF00A651)),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("Open M-Pesa", color = Color(0xFF00A651))
+                    }
+                }
+            } else null
+        )
+    }
+
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = 650.dp),
+            shape = RoundedCornerShape(28.dp),
+            colors = CardDefaults.cardColors(containerColor = Color.Transparent),
+            elevation = CardDefaults.cardElevation(defaultElevation = 24.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                Color(0xFF0D1B2A),
+                                Color(0xFF1B263B),
+                                Color(0xFF0D1B2A)
+                            )
+                        )
+                    )
             ) {
-                Text("Pay")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel", color = WealthSoftWhite)
+                // Futuristic glow effect
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(120.dp)
+                        .background(
+                            brush = Brush.verticalGradient(
+                                colors = listOf(
+                                    Color(0xFF00A651).copy(alpha = 0.15f),
+                                    Color.Transparent
+                                )
+                            )
+                        )
+                )
+
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(14.dp)
+                ) {
+                    // ═══════════════ HEADER ═══════════════
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                // Animated payment icon
+                                Box(
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .clip(RoundedCornerShape(14.dp))
+                                        .background(
+                                            brush = Brush.linearGradient(
+                                                colors = listOf(
+                                                    Color(0xFF00A651),
+                                                    Color(0xFF00D26A)
+                                                )
+                                            )
+                                        )
+                                        .border(
+                                            1.dp,
+                                            Color(0xFF00D26A).copy(alpha = 0.5f),
+                                            RoundedCornerShape(14.dp)
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        Icons.Default.SendToMobile,
+                                        contentDescription = null,
+                                        tint = Color.White,
+                                        modifier = Modifier.size(26.dp)
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(14.dp))
+                                Column {
+                                    Text(
+                                        "INSTANT PAYMENT",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Color(0xFF00D26A),
+                                        letterSpacing = 2.sp,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        "Pay Loan",
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        color = WealthSoftWhite
+                                    )
+                                }
+                            }
+                            IconButton(
+                                onClick = onDismiss,
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .clip(CircleShape)
+                                    .background(WealthSoftWhite.copy(alpha = 0.1f))
+                            ) {
+                                Icon(
+                                    Icons.Default.Close,
+                                    contentDescription = "Close",
+                                    tint = WealthSoftWhite.copy(alpha = 0.7f),
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    // ═══════════════ LOAN SUMMARY CARD ═══════════════
+                    item {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(16.dp))
+                                .background(
+                                    brush = Brush.horizontalGradient(
+                                        colors = listOf(
+                                            Color(0xFF1E3A5F).copy(alpha = 0.8f),
+                                            Color(0xFF2E4A6F).copy(alpha = 0.6f)
+                                        )
+                                    )
+                                )
+                                .border(
+                                    1.dp,
+                                    Color(0xFF4A90D9).copy(alpha = 0.3f),
+                                    RoundedCornerShape(16.dp)
+                                )
+                                .padding(16.dp)
+                        ) {
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Column {
+                                        Text(
+                                            "LOAN",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = WealthSoftWhite.copy(alpha = 0.5f),
+                                            letterSpacing = 1.sp
+                                        )
+                                        Text(
+                                            loan.title,
+                                            color = WealthSoftWhite,
+                                            fontWeight = FontWeight.SemiBold,
+                                            fontSize = 15.sp
+                                        )
+                                        Text(
+                                            loan.lenderName,
+                                            color = WealthSoftWhite.copy(alpha = 0.6f),
+                                            fontSize = 12.sp
+                                        )
+                                    }
+                                    Column(horizontalAlignment = Alignment.End) {
+                                        Text(
+                                            "BALANCE",
+                                            style = MaterialTheme.typography.labelSmall,
+                                            color = WealthMutedRed.copy(alpha = 0.7f),
+                                            letterSpacing = 1.sp
+                                        )
+                                        Text(
+                                            "KES ${String.format("%,d", kotlin.math.ceil(loan.remainingAmount).toInt())}",
+                                            color = WealthMutedRed,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 18.sp
+                                        )
+                                    }
+                                }
+
+                                // Progress bar
+                                Column {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            "${String.format("%.0f", loan.progressPercentage)}% paid",
+                                            color = WealthEmerald,
+                                            fontSize = 11.sp,
+                                            fontWeight = FontWeight.Medium
+                                        )
+                                        Text(
+                                            "KES ${String.format("%,d", kotlin.math.ceil(loan.amountPaid).toInt())} / ${String.format("%,d", kotlin.math.ceil(loan.totalAmount).toInt())}",
+                                            color = WealthSoftWhite.copy(alpha = 0.5f),
+                                            fontSize = 11.sp
+                                        )
+                                    }
+                                    Spacer(modifier = Modifier.height(6.dp))
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(6.dp)
+                                            .clip(RoundedCornerShape(3.dp))
+                                            .background(WealthSoftWhite.copy(alpha = 0.1f))
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth((loan.progressPercentage / 100).toFloat().coerceIn(0f, 1f))
+                                                .fillMaxHeight()
+                                                .clip(RoundedCornerShape(3.dp))
+                                                .background(
+                                                    brush = Brush.horizontalGradient(
+                                                        colors = listOf(WealthEmerald, Color(0xFF00D26A))
+                                                    )
+                                                )
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // ═══════════════ PAYBILL AUTO-DETECTED ═══════════════
+                    if (paybillNumber.isNotEmpty()) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color(0xFF00A651).copy(alpha = 0.12f))
+                                    .border(1.dp, Color(0xFF00A651).copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                                    .padding(12.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Verified,
+                                            contentDescription = null,
+                                            tint = Color(0xFF00D26A),
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Column {
+                                            Text(
+                                                "Paybill: $paybillNumber",
+                                                color = Color(0xFF00D26A),
+                                                fontWeight = FontWeight.Bold,
+                                                fontSize = 14.sp
+                                            )
+                                            Text(
+                                                lenderInfo?.shortName ?: loan.lenderName,
+                                                color = WealthSoftWhite.copy(alpha = 0.6f),
+                                                fontSize = 11.sp
+                                            )
+                                        }
+                                    }
+                                    Surface(
+                                        color = Color(0xFF00A651).copy(alpha = 0.2f),
+                                        shape = RoundedCornerShape(6.dp)
+                                    ) {
+                                        Text(
+                                            "AUTO",
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+                                            color = Color(0xFF00D26A),
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            letterSpacing = 1.sp
+                                        )
+                                    }
+                                }
+                        }
+                    }
+                }
+
+                    // ═══════════════ PAYMENT AMOUNT ═══════════════
+                    item {
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(
+                                "AMOUNT TO PAY",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = WealthSoftWhite.copy(alpha = 0.5f),
+                                letterSpacing = 1.sp
+                            )
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .background(
+                                        brush = Brush.horizontalGradient(
+                                            colors = listOf(
+                                                Color(0xFF00A651).copy(alpha = 0.08f),
+                                                Color(0xFF00A651).copy(alpha = 0.03f)
+                                            )
+                                        )
+                                    )
+                                    .border(1.dp, Color(0xFF00A651).copy(alpha = 0.3f), RoundedCornerShape(14.dp))
+                                    .padding(4.dp)
+                            ) {
+                                OutlinedTextField(
+                                    value = amount,
+                                    onValueChange = { newValue ->
+                                        // Only allow digits, auto round up
+                                        val filtered = newValue.filter { c -> c.isDigit() }
+                                        amount = filtered
+                                    },
+                                    label = { Text("Payment Amount", color = WealthSoftWhite.copy(alpha = 0.5f)) },
+                                    prefix = {
+                                        Text(
+                                            "KES ",
+                                            color = Color(0xFF00D26A),
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 16.sp
+                                        )
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedTextColor = WealthSoftWhite,
+                                        unfocusedTextColor = WealthSoftWhite,
+                                        focusedBorderColor = Color.Transparent,
+                                        unfocusedBorderColor = Color.Transparent,
+                                        cursorColor = Color(0xFF00D26A)
+                                    ),
+                                    textStyle = androidx.compose.ui.text.TextStyle(
+                                        fontSize = 22.sp,
+                                        fontWeight = FontWeight.Bold
+                                    ),
+                                    singleLine = true
+                                )
+                            }
+                            // Show rounded amount
+                            if (roundedAmount > 0) {
+                                Text(
+                                    "Amount: KES ${String.format("%,d", roundedAmount)}",
+                                    color = Color(0xFF00D26A).copy(alpha = 0.7f),
+                                    fontSize = 11.sp
+                                )
+                            }
+                        }
+                    }
+
+                    // ═══════════════ ACCOUNT NUMBER ═══════════════
+                    if (paybillNumber.isNotEmpty()) {
+                        item {
+                            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                Text(
+                                    "LOAN ACCOUNT",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = WealthSoftWhite.copy(alpha = 0.5f),
+                                    letterSpacing = 1.sp
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(WealthSoftWhite.copy(alpha = 0.05f))
+                                        .border(1.dp, WealthSoftWhite.copy(alpha = 0.15f), RoundedCornerShape(12.dp))
+                                        .padding(4.dp)
+                                ) {
+                                    OutlinedTextField(
+                                        value = accountNumber,
+                                        onValueChange = { accountNumber = it },
+                                        placeholder = {
+                                            Text(
+                                                lenderInfo?.accountFormat ?: "Enter your loan account number",
+                                                color = WealthSoftWhite.copy(alpha = 0.3f)
+                                            )
+                                        },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = OutlinedTextFieldDefaults.colors(
+                                            focusedTextColor = WealthSoftWhite,
+                                            unfocusedTextColor = WealthSoftWhite,
+                                            focusedBorderColor = Color.Transparent,
+                                            unfocusedBorderColor = Color.Transparent,
+                                            cursorColor = WealthBlue
+                                        ),
+                                        singleLine = true,
+                                        leadingIcon = {
+                                            Icon(
+                                                Icons.Default.Tag,
+                                                null,
+                                                tint = WealthBlue.copy(alpha = 0.6f),
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // ═══════════════ PHONE NUMBER FOR STK ═══════════════
+                    item {
+                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
+                                    "M-PESA PHONE",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = WealthSoftWhite.copy(alpha = 0.5f),
+                                    letterSpacing = 1.sp
+                                )
+                                // Show auto-detected badge if phone was found from SIM
+                                if (isPhoneAutoDetected && phoneNumber.isNotEmpty()) {
+                                    Surface(
+                                        color = Color(0xFF00A651).copy(alpha = 0.2f),
+                                        shape = RoundedCornerShape(4.dp)
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Icon(
+                                                Icons.Default.SimCard,
+                                                null,
+                                                tint = Color(0xFF00D26A),
+                                                modifier = Modifier.size(10.dp)
+                                            )
+                                            Text(
+                                                "FROM SIM",
+                                                color = Color(0xFF00D26A),
+                                                fontSize = 8.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                letterSpacing = 0.5.sp
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(
+                                        if (isPhoneAutoDetected && phoneNumber.isNotEmpty())
+                                            Color(0xFF00A651).copy(alpha = 0.08f)
+                                        else
+                                            WealthSoftWhite.copy(alpha = 0.05f)
+                                    )
+                                    .border(
+                                        1.dp,
+                                        if (isPhoneAutoDetected && phoneNumber.isNotEmpty())
+                                            Color(0xFF00A651).copy(alpha = 0.3f)
+                                        else
+                                            WealthSoftWhite.copy(alpha = 0.15f),
+                                        RoundedCornerShape(12.dp)
+                                    )
+                                    .padding(4.dp)
+                            ) {
+                                OutlinedTextField(
+                                    value = phoneNumber,
+                                    onValueChange = { phoneNumber = it.filter { c -> c.isDigit() }.take(12) },
+                                    placeholder = { Text("254712345678", color = WealthSoftWhite.copy(alpha = 0.3f)) },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
+                                    colors = OutlinedTextFieldDefaults.colors(
+                                        focusedTextColor = WealthSoftWhite,
+                                        unfocusedTextColor = WealthSoftWhite,
+                                        focusedBorderColor = Color.Transparent,
+                                        unfocusedBorderColor = Color.Transparent,
+                                        cursorColor = Color(0xFF00A651)
+                                    ),
+                                    singleLine = true,
+                                    leadingIcon = {
+                                        Icon(
+                                            Icons.Default.PhoneAndroid,
+                                            null,
+                                            tint = Color(0xFF00A651).copy(alpha = 0.7f),
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                    },
+                                    trailingIcon = {
+                                        // Show SIM selector if multiple SIMs available
+                                        if (simPhoneNumbers.size > 1) {
+                                            IconButton(
+                                                onClick = { showSimSelector = !showSimSelector },
+                                                modifier = Modifier.size(32.dp)
+                                            ) {
+                                                Icon(
+                                                    if (showSimSelector) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                                                    contentDescription = "Select SIM",
+                                                    tint = Color(0xFF00A651).copy(alpha = 0.7f),
+                                                    modifier = Modifier.size(20.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                )
+                            }
+
+                            // SIM Selector dropdown (if multiple SIMs)
+                            if (showSimSelector && simPhoneNumbers.size > 1) {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(WealthNavyLight.copy(alpha = 0.9f))
+                                        .border(1.dp, WealthSoftWhite.copy(alpha = 0.1f), RoundedCornerShape(10.dp))
+                                        .padding(4.dp),
+                                    verticalArrangement = Arrangement.spacedBy(2.dp)
+                                ) {
+                                    simPhoneNumbers.forEachIndexed { index, simInfo ->
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .background(
+                                                    if (phoneNumber == simInfo.phoneNumber)
+                                                        Color(0xFF00A651).copy(alpha = 0.2f)
+                                                    else
+                                                        Color.Transparent
+                                                )
+                                                .clickable {
+                                                    phoneNumber = simInfo.phoneNumber
+                                                    showSimSelector = false
+                                                }
+                                                .padding(12.dp),
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Row(
+                                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Box(
+                                                    modifier = Modifier
+                                                        .size(28.dp)
+                                                        .clip(RoundedCornerShape(6.dp))
+                                                        .background(
+                                                            if (simInfo.carrierName?.contains("Safaricom", ignoreCase = true) == true)
+                                                                Color(0xFF00A651)
+                                                            else if (simInfo.carrierName?.contains("Airtel", ignoreCase = true) == true)
+                                                                Color(0xFFE53935)
+                                                            else
+                                                                WealthBlue
+                                                        ),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Text(
+                                                        "${simInfo.slotIndex + 1}",
+                                                        color = Color.White,
+                                                        fontWeight = FontWeight.Bold,
+                                                        fontSize = 12.sp
+                                                    )
+                                                }
+                                                Column {
+                                                    Text(
+                                                        simInfo.phoneNumber,
+                                                        color = WealthSoftWhite,
+                                                        fontWeight = FontWeight.Medium,
+                                                        fontSize = 13.sp
+                                                    )
+                                                    Text(
+                                                        simInfo.carrierName ?: "SIM ${simInfo.slotIndex + 1}",
+                                                        color = WealthSoftWhite.copy(alpha = 0.5f),
+                                                        fontSize = 11.sp
+                                                    )
+                                                }
+                                            }
+                                            if (phoneNumber == simInfo.phoneNumber) {
+                                                Icon(
+                                                    Icons.Default.CheckCircle,
+                                                    null,
+                                                    tint = Color(0xFF00D26A),
+                                                    modifier = Modifier.size(18.dp)
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Helper text
+                            if (!isPhoneAutoDetected) {
+                                Text(
+                                    "Enter the M-Pesa registered phone number",
+                                    color = WealthSoftWhite.copy(alpha = 0.4f),
+                                    fontSize = 10.sp
+                                )
+                            }
+                        }
+                    }
+
+                    // ═══════════════ PAYMENT OPTIONS ═══════════════
+                    item {
+                        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text(
+                                "PAYMENT METHOD",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = WealthSoftWhite.copy(alpha = 0.5f),
+                                letterSpacing = 1.sp
+                            )
+
+                            // ═══ OPTION 1: STK PUSH (Main - Recommended) ═══
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(
+                                        brush = Brush.horizontalGradient(
+                                            colors = listOf(
+                                                Color(0xFF00A651).copy(alpha = 0.2f),
+                                                Color(0xFF00D26A).copy(alpha = 0.1f)
+                                            )
+                                        )
+                                    )
+                                    .border(
+                                        2.dp,
+                                        brush = Brush.horizontalGradient(
+                                            colors = listOf(
+                                                Color(0xFF00A651).copy(alpha = 0.6f),
+                                                Color(0xFF00D26A).copy(alpha = 0.4f)
+                                            )
+                                        ),
+                                        RoundedCornerShape(16.dp)
+                                    )
+                                    .clickable(enabled = !isProcessingStkPush) {
+                                        val payAmount = roundedAmount.toDouble()
+                                        val phone = phoneNumber.ifEmpty { "" }
+                                        val account = accountNumber.ifEmpty { loan.title }
+
+                                        when {
+                                            payAmount <= 0 -> {
+                                                Toast
+                                                    .makeText(context, "Enter a valid amount", Toast.LENGTH_SHORT)
+                                                    .show()
+                                            }
+
+                                            phone.length < 9 -> {
+                                                Toast
+                                                    .makeText(
+                                                        context,
+                                                        "Enter phone number (e.g., 0712345678)",
+                                                        Toast.LENGTH_SHORT
+                                                    )
+                                                    .show()
+                                            }
+
+                                            else -> {
+                                                isProcessingStkPush = true
+                                                stkPushStatus = "Sending STK Push..."
+
+                                                // Use the real MpesaRepository for STK Push
+                                                scope.launch {
+                                                    try {
+                                                        val result = mpesaRepository.initiateSTKPush(
+                                                            phoneNumber = phone,
+                                                            amount = payAmount,
+                                                            accountReference = account,
+                                                            transactionDesc = "Loan payment to ${loan.lenderName} via Budgie"
+                                                        )
+
+                                                        isProcessingStkPush = false
+                                                        paymentResultSuccess = result.success
+                                                        paymentResultMessage = result.message
+                                                        showPaymentResult = true
+                                                        stkPushStatus = if (result.success) "STK Push sent!" else "Error: ${result.message}"
+                                                    } catch (e: Exception) {
+                                                        isProcessingStkPush = false
+                                                        paymentResultSuccess = false
+                                                        paymentResultMessage = "Error: ${e.message ?: "Unknown error occurred"}"
+                                                        showPaymentResult = true
+                                                        stkPushStatus = "Error: ${e.message}"
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                    .padding(16.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(48.dp)
+                                                .clip(RoundedCornerShape(12.dp))
+                                                .background(
+                                                    brush = Brush.linearGradient(
+                                                        colors = listOf(
+                                                            Color(0xFF00A651),
+                                                            Color(0xFF00D26A)
+                                                        )
+                                                    )
+                                                ),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            if (isProcessingStkPush) {
+                                                CircularProgressIndicator(
+                                                    modifier = Modifier.size(24.dp),
+                                                    color = Color.White,
+                                                    strokeWidth = 2.dp
+                                                )
+                                            } else {
+                                                Icon(
+                                                    Icons.Default.SendToMobile,
+                                                    null,
+                                                    tint = Color.White,
+                                                    modifier = Modifier.size(26.dp)
+                                                )
+                                            }
+                                        }
+                                        Column {
+                                            Row(
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                            ) {
+                                                Text(
+                                                    "STK Push",
+                                                    color = WealthSoftWhite,
+                                                    fontWeight = FontWeight.Bold,
+                                                    fontSize = 16.sp
+                                                )
+                                                Surface(
+                                                    color = Color(0xFF00D26A),
+                                                    shape = RoundedCornerShape(4.dp)
+                                                ) {
+                                                    Text(
+                                                        "INSTANT",
+                                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                                        color = Color.White,
+                                                        fontSize = 8.sp,
+                                                        fontWeight = FontWeight.ExtraBold,
+                                                        letterSpacing = 0.5.sp
+                                                    )
+                                                }
+                                            }
+                                            Text(
+                                                if (isProcessingStkPush) "Processing payment..." else "Enter M-Pesa PIN on your phone",
+                                                color = WealthSoftWhite.copy(alpha = 0.6f),
+                                                fontSize = 12.sp
+                                            )
+                                        }
+                                    }
+                                    Icon(
+                                        Icons.Default.Lock,
+                                        null,
+                                        tint = Color(0xFF00D26A),
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+                            }
+
+                            // STK Push Status Message
+                            if (stkPushStatus != null) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(RoundedCornerShape(10.dp))
+                                        .background(
+                                            if (stkPushStatus!!.startsWith("Error"))
+                                                WealthMutedRed.copy(alpha = 0.15f)
+                                            else
+                                                Color(0xFF00A651).copy(alpha = 0.15f)
+                                        )
+                                        .padding(12.dp)
+                                ) {
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            if (stkPushStatus!!.startsWith("Error"))
+                                                Icons.Default.Error
+                                            else
+                                                Icons.Default.CheckCircle,
+                                            null,
+                                            tint = if (stkPushStatus!!.startsWith("Error"))
+                                                WealthMutedRed
+                                            else
+                                                Color(0xFF00D26A),
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Text(
+                                            stkPushStatus!!,
+                                            color = WealthSoftWhite.copy(alpha = 0.9f),
+                                            fontSize = 13.sp
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Divider with text
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                HorizontalDivider(
+                                    modifier = Modifier.weight(1f),
+                                    color = WealthSoftWhite.copy(alpha = 0.1f)
+                                )
+                                Text(
+                                    "OR PAY MANUALLY",
+                                    color = WealthSoftWhite.copy(alpha = 0.4f),
+                                    fontSize = 10.sp,
+                                    letterSpacing = 1.sp
+                                )
+                                HorizontalDivider(
+                                    modifier = Modifier.weight(1f),
+                                    color = WealthSoftWhite.copy(alpha = 0.1f)
+                                )
+                            }
+
+                            // ═══ OPTION 2 & 3: Manual Options Row ═══
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                // Open M-Pesa App
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(Color(0xFF00A651).copy(alpha = 0.08f))
+                                        .border(
+                                            1.dp,
+                                            Color(0xFF00A651).copy(alpha = 0.25f),
+                                            RoundedCornerShape(12.dp)
+                                        )
+                                        .clickable { openMpesaAppForPayment(context) }
+                                        .padding(14.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(38.dp)
+                                                .clip(RoundedCornerShape(10.dp))
+                                                .background(Color(0xFF00A651)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                "M",
+                                                color = Color.White,
+                                                fontWeight = FontWeight.ExtraBold,
+                                                fontSize = 18.sp
+                                            )
+                                        }
+                                        Text(
+                                            "M-Pesa App",
+                                            color = WealthSoftWhite,
+                                            fontWeight = FontWeight.Medium,
+                                            fontSize = 12.sp
+                                        )
+                                    }
+                                }
+
+                                // Open SIM Toolkit
+                                Box(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(WealthAmber.copy(alpha = 0.08f))
+                                        .border(
+                                            1.dp,
+                                            WealthAmber.copy(alpha = 0.25f),
+                                            RoundedCornerShape(12.dp)
+                                        )
+                                        .clickable { openStkAppForPayment(context) }
+                                        .padding(14.dp),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Column(
+                                        horizontalAlignment = Alignment.CenterHorizontally,
+                                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size(38.dp)
+                                                .clip(RoundedCornerShape(10.dp))
+                                                .background(WealthAmber),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                Icons.Default.SimCard,
+                                                null,
+                                                tint = Color.White,
+                                                modifier = Modifier.size(20.dp)
+                                            )
+                                        }
+                                        Text(
+                                            "SIM Toolkit",
+                                            color = WealthSoftWhite,
+                                            fontWeight = FontWeight.Medium,
+                                            fontSize = 12.sp
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // ═══════════════ PAYMENT SUMMARY ═══════════════
+                    if (paybillNumber.isNotEmpty() && roundedAmount > 0) {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(WealthBlue.copy(alpha = 0.1f))
+                                    .border(1.dp, WealthBlue.copy(alpha = 0.2f), RoundedCornerShape(12.dp))
+                                    .padding(14.dp)
+                            ) {
+                                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Receipt,
+                                            null,
+                                            tint = WealthBlue,
+                                            modifier = Modifier.size(18.dp)
+                                        )
+                                        Text(
+                                            "PAYMENT SUMMARY",
+                                            color = WealthBlue,
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 11.sp,
+                                            letterSpacing = 1.sp
+                                        )
+                                    }
+                                    HorizontalDivider(color = WealthBlue.copy(alpha = 0.2f))
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text("Paybill", color = WealthSoftWhite.copy(alpha = 0.6f), fontSize = 12.sp)
+                                        Text(paybillNumber, color = WealthSoftWhite, fontWeight = FontWeight.Medium, fontSize = 12.sp)
+                                    }
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text("Account", color = WealthSoftWhite.copy(alpha = 0.6f), fontSize = 12.sp)
+                                        Text(
+                                            accountNumber.ifEmpty { "Your loan account" },
+                                            color = WealthSoftWhite,
+                                            fontWeight = FontWeight.Medium,
+                                            fontSize = 12.sp
+                                        )
+                                    }
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text("Amount", color = WealthSoftWhite.copy(alpha = 0.6f), fontSize = 12.sp)
+                                        Text(
+                                            "KES ${String.format("%,d", roundedAmount)}",
+                                            color = Color(0xFF00D26A),
+                                            fontWeight = FontWeight.Bold,
+                                            fontSize = 13.sp
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // ═══════════════ ACTION BUTTONS ═══════════════
+                    item {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            // Cancel
+                            OutlinedButton(
+                                onClick = onDismiss,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(48.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                border = BorderStroke(1.dp, WealthSoftWhite.copy(alpha = 0.2f))
+                            ) {
+                                Text(
+                                    "Cancel",
+                                    color = WealthSoftWhite.copy(alpha = 0.7f),
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+
+                            // Record Payment
+                            Button(
+                                onClick = {
+                                    if (roundedAmount > 0) {
+                                        onConfirm(roundedAmount.toDouble(), reference.ifEmpty { "Payment recorded" })
+                                    }
+                                },
+                                enabled = roundedAmount > 0,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(48.dp),
+                                shape = RoundedCornerShape(12.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = WealthEmerald,
+                                    disabledContainerColor = WealthSoftWhite.copy(alpha = 0.15f)
+                                )
+                            ) {
+                                Icon(
+                                    Icons.Default.CheckCircle,
+                                    null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Record", fontWeight = FontWeight.Bold)
+                            }
+                        }
+                    }
+
+                    item { Spacer(modifier = Modifier.height(8.dp)) }
+                }
             }
         }
+    }
+}
+
+/**
+ * Data class to hold SIM card phone number info
+ */
+data class SimPhoneInfo(
+    val phoneNumber: String,
+    val carrierName: String?,
+    val slotIndex: Int
+)
+
+/**
+ * Gets phone number(s) from SIM card(s) installed on the device
+ * Returns a list of phone numbers (may be empty if not available or permission denied)
+ *
+ * Note: Many carriers don't store phone numbers on SIM cards, so this may return empty.
+ */
+@Suppress("DEPRECATION")
+private fun getSimPhoneNumbers(context: Context): List<SimPhoneInfo> {
+    val phoneNumbers = mutableListOf<SimPhoneInfo>()
+
+    // Check if we have permission
+    if (ContextCompat.checkSelfPermission(context, Manifest.permission.READ_PHONE_STATE)
+        != PackageManager.PERMISSION_GRANTED) {
+        android.util.Log.d("LoansScreen", "READ_PHONE_STATE permission not granted")
+        return emptyList()
+    }
+
+    try {
+        // Try using SubscriptionManager for dual SIM support (API 22+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP_MR1) {
+            val subscriptionManager = context.getSystemService(Context.TELEPHONY_SUBSCRIPTION_SERVICE) as? SubscriptionManager
+
+            if (subscriptionManager != null) {
+                try {
+                    val subscriptionInfoList = subscriptionManager.activeSubscriptionInfoList
+
+                    if (subscriptionInfoList != null) {
+                        for (subscriptionInfo in subscriptionInfoList) {
+                            val number = subscriptionInfo.number
+                            if (!number.isNullOrBlank()) {
+                                val formattedNumber = formatPhoneNumberTo254(number)
+                                if (formattedNumber != null) {
+                                    phoneNumbers.add(
+                                        SimPhoneInfo(
+                                            phoneNumber = formattedNumber,
+                                            carrierName = subscriptionInfo.carrierName?.toString(),
+                                            slotIndex = subscriptionInfo.simSlotIndex
+                                        )
+                                    )
+                                }
+                            }
+                        }
+                    }
+                } catch (e: SecurityException) {
+                    android.util.Log.e("LoansScreen", "SecurityException getting subscription info: ${e.message}")
+                }
+            }
+        }
+
+        // Fallback: Try TelephonyManager for primary SIM
+        if (phoneNumbers.isEmpty()) {
+            val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as? TelephonyManager
+
+            if (telephonyManager != null) {
+                try {
+                    val line1Number = telephonyManager.line1Number
+                    if (!line1Number.isNullOrBlank()) {
+                        val formattedNumber = formatPhoneNumberTo254(line1Number)
+                        if (formattedNumber != null) {
+                            phoneNumbers.add(
+                                SimPhoneInfo(
+                                    phoneNumber = formattedNumber,
+                                    carrierName = telephonyManager.networkOperatorName,
+                                    slotIndex = 0
+                                )
+                            )
+                        }
+                    }
+                } catch (e: SecurityException) {
+                    android.util.Log.e("LoansScreen", "SecurityException getting line1Number: ${e.message}")
+                }
+            }
+        }
+
+    } catch (e: Exception) {
+        android.util.Log.e("LoansScreen", "Error getting SIM phone numbers: ${e.message}")
+    }
+
+    return phoneNumbers
+}
+
+/**
+ * Format phone number to 254XXXXXXXXX format (Kenya)
+ */
+private fun formatPhoneNumberTo254(phone: String): String? {
+    // Remove all non-digit characters
+    val cleanPhone = phone.replace(Regex("[^0-9]"), "")
+
+    return when {
+        // Already in 254 format with 12 digits
+        cleanPhone.startsWith("254") && cleanPhone.length == 12 -> cleanPhone
+        // Starts with + and 254
+        cleanPhone.startsWith("254") && cleanPhone.length == 12 -> cleanPhone
+        // Starts with 0 (local format) - 10 digits
+        cleanPhone.startsWith("0") && cleanPhone.length == 10 -> "254${cleanPhone.substring(1)}"
+        // Starts with 7 (without leading 0) - 9 digits
+        cleanPhone.startsWith("7") && cleanPhone.length == 9 -> "254$cleanPhone"
+        // Just 9 digits starting with 7
+        cleanPhone.length == 9 && cleanPhone.first() == '7' -> "254$cleanPhone"
+        // Starts with 1 (some Airtel numbers) - 9 digits
+        cleanPhone.startsWith("1") && cleanPhone.length == 9 -> "254$cleanPhone"
+        // Already 9 digits
+        cleanPhone.length == 9 -> "254$cleanPhone"
+        else -> null
+    }
+}
+
+/**
+ * Opens M-Pesa app for payment
+ */
+private fun openMpesaAppForPayment(context: Context) {
+    val mpesaPackage = "com.safaricom.mpesa.lifestyle"
+
+    try {
+        val launchIntent = context.packageManager.getLaunchIntentForPackage(mpesaPackage)
+        if (launchIntent != null) {
+            launchIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(launchIntent)
+            Toast.makeText(context, "Opening M-Pesa...", Toast.LENGTH_SHORT).show()
+            return
+        }
+    } catch (e: Exception) {
+        android.util.Log.e("LoansScreen", "M-Pesa launch failed: ${e.message}")
+    }
+
+    // Fallback: Search installed apps
+    try {
+        val installedApps = context.packageManager.getInstalledApplications(0)
+        for (app in installedApps) {
+            val packageName = app.packageName.lowercase()
+            if (packageName.contains("mpesa") || packageName.contains("safaricom")) {
+                val intent = context.packageManager.getLaunchIntentForPackage(app.packageName)
+                if (intent != null) {
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    context.startActivity(intent)
+                    Toast.makeText(context, "Opening M-Pesa...", Toast.LENGTH_SHORT).show()
+                    return
+                }
+            }
+        }
+    } catch (e: Exception) {
+        android.util.Log.e("LoansScreen", "App search failed: ${e.message}")
+    }
+
+    Toast.makeText(context, "M-Pesa app not found. Please open manually.", Toast.LENGTH_LONG).show()
+}
+
+/**
+ * Opens SIM Toolkit app for USSD payment
+ */
+private fun openStkAppForPayment(context: Context) {
+    val stkPackages = listOf(
+        "com.android.stk",
+        "com.android.stk2",
+        "com.mediatek.stk",
+        "com.qualcomm.qti.simkit",
+        "com.samsung.android.stk",
+        "com.huawei.stk",
+        "com.oppo.stk",
+        "com.vivo.stk",
+        "com.xiaomi.stk"
     )
+
+    for (packageName in stkPackages) {
+        try {
+            val intent = context.packageManager.getLaunchIntentForPackage(packageName)
+            if (intent != null) {
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(intent)
+                Toast.makeText(context, "Opening SIM Toolkit...", Toast.LENGTH_SHORT).show()
+                return
+            }
+        } catch (e: Exception) {
+            continue
+        }
+    }
+
+    // Fallback
+    try {
+        val intent = Intent().apply {
+            action = "android.intent.action.MAIN"
+            addCategory("android.intent.category.LAUNCHER")
+            setClassName("com.android.stk", "com.android.stk.StkLauncherActivity")
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        context.startActivity(intent)
+        Toast.makeText(context, "Opening SIM Toolkit...", Toast.LENGTH_SHORT).show()
+        return
+    } catch (e: Exception) {
+        android.util.Log.e("LoansScreen", "STK launch failed: ${e.message}")
+    }
+
+    Toast.makeText(context, "SIM Toolkit not found. Open from phone settings.", Toast.LENGTH_LONG).show()
+}
+
+/**
+ * Initiates M-Pesa STK Push using Safaricom Daraja API
+ * This sends a payment prompt directly to the user's phone
+ */
+private fun initiateStkPush(
+    context: Context,
+    phoneNumber: String,
+    amount: Double,
+    paybill: String,
+    accountNumber: String,
+    onSuccess: (String) -> Unit,
+    onError: (String) -> Unit
+) {
+    // Format phone number (ensure it starts with 254)
+    val formattedPhone = formatPhoneNumber(phoneNumber)
+    if (formattedPhone == null) {
+        onError("Invalid phone number format. Use 254XXXXXXXXX")
+        return
+    }
+
+    // In a production app, you would:
+    // 1. Call your backend server (NOT directly to Safaricom from mobile)
+    // 2. Your backend would authenticate with Safaricom and initiate STK Push
+    // 3. Your backend returns status to the app
+
+    // For now, we'll simulate the flow and show instructions
+    // because Daraja API requires server-side implementation for security
+
+    kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+        try {
+            // Simulate API call delay
+            kotlinx.coroutines.delay(2000)
+
+            // In production, this would be a real API response
+            // For demo, we'll show the user what they need to do manually
+            val message = """
+                STK Push initiated!
+                
+                📱 Check your phone for M-Pesa prompt
+                
+                Details:
+                • Paybill: $paybill
+                • Account: $accountNumber
+                • Amount: KES ${String.format("%,.0f", amount)}
+                • Phone: $formattedPhone
+                
+                Enter your M-Pesa PIN to complete payment.
+            """.trimIndent()
+
+            // Show detailed instructions
+            onSuccess("STK Push sent! Check your phone for M-Pesa prompt.")
+
+            // Also show a notification with payment details
+            showPaymentNotification(context, paybill, accountNumber, amount)
+
+        } catch (e: Exception) {
+            onError("Failed to initiate STK Push: ${e.message}")
+        }
+    }
+}
+
+/**
+ * Format phone number to 254XXXXXXXXX format
+ */
+private fun formatPhoneNumber(phone: String): String? {
+    val cleanPhone = phone.replace(Regex("[^0-9]"), "")
+
+    return when {
+        cleanPhone.startsWith("254") && cleanPhone.length == 12 -> cleanPhone
+        cleanPhone.startsWith("0") && cleanPhone.length == 10 -> "254${cleanPhone.substring(1)}"
+        cleanPhone.startsWith("7") && cleanPhone.length == 9 -> "254$cleanPhone"
+        cleanPhone.length == 9 -> "254$cleanPhone"
+        else -> null
+    }
+}
+
+/**
+ * Show notification with payment details for reference
+ */
+private fun showPaymentNotification(
+    context: Context,
+    paybill: String,
+    accountNumber: String,
+    amount: Double
+) {
+    try {
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as android.app.NotificationManager
+
+        // Create notification channel
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            val channel = android.app.NotificationChannel(
+                "payment_channel",
+                "Payment Notifications",
+                android.app.NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "Notifications for M-Pesa payments"
+            }
+            notificationManager.createNotificationChannel(channel)
+        }
+
+        val notification = androidx.core.app.NotificationCompat.Builder(context, "payment_channel")
+            .setSmallIcon(android.R.drawable.ic_dialog_info)
+            .setContentTitle("M-Pesa Payment")
+            .setContentText("Paybill: $paybill | Account: $accountNumber | KES ${String.format("%,.0f", amount)}")
+            .setStyle(
+                androidx.core.app.NotificationCompat.BigTextStyle()
+                    .bigText("""
+                        Paybill: $paybill
+                        Account: $accountNumber
+                        Amount: KES ${String.format("%,.0f", amount)}
+                        
+                        If STK Push doesn't arrive, dial *334# or open M-Pesa app.
+                    """.trimIndent())
+            )
+            .setPriority(androidx.core.app.NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+            .build()
+
+        notificationManager.notify(System.currentTimeMillis().toInt(), notification)
+    } catch (e: Exception) {
+        android.util.Log.e("LoansScreen", "Failed to show notification: ${e.message}")
+    }
 }
 
 @Composable
@@ -1961,7 +3118,7 @@ private fun LoanDetailsDialog(
                         Button(
                             onClick = onMakePayment,
                             modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(containerColor = WealthBlue)
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF00A651))
                         ) {
                             Icon(Icons.Default.Payment, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(modifier = Modifier.width(8.dp))

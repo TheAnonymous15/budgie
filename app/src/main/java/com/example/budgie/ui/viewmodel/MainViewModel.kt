@@ -4,13 +4,6 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.budgie.ai.FinancialAdvisor
-import com.example.budgie.ai.ShoppingListAnalyzer
-import com.example.budgie.ai.ml.BehaviorLearningEngine
-import com.example.budgie.ai.ml.*
-import com.example.budgie.ai.pipeline.DashboardSummary
-import com.example.budgie.ai.pipeline.FinancialAIPipeline
-import com.example.budgie.ai.pipeline.PipelineAnalysis
-import com.example.budgie.ai.pipeline.TransactionAnalysis
 import com.example.budgie.data.local.BudgieDatabase
 import com.example.budgie.data.model.*
 import com.example.budgie.data.model.RiskLevel as ModelRiskLevel
@@ -32,41 +25,34 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val loanDao = database.loanDao()
     private val shoppingDao = database.shoppingDao()
     private val advisor = FinancialAdvisor(application)
-    private val shoppingAnalyzer = ShoppingListAnalyzer()
 
-    // Behavior Learning Engine (Offline ML)
-    private val behaviorEngine = BehaviorLearningEngine(application)
+    // AI Analysis State (stub for now - will be implemented later)
+    private val _aiAnalysis = MutableStateFlow<Any?>(null)
+    val aiAnalysis: StateFlow<Any?> = _aiAnalysis.asStateFlow()
 
-    // AI Pipeline
-    private val aiPipeline = FinancialAIPipeline.getInstance(application)
-
-    // AI Pipeline Analysis State
-    private val _aiAnalysis = MutableStateFlow<PipelineAnalysis?>(null)
-    val aiAnalysis: StateFlow<PipelineAnalysis?> = _aiAnalysis.asStateFlow()
-
-    private val _dashboardSummary = MutableStateFlow<DashboardSummary?>(null)
-    val dashboardSummary: StateFlow<DashboardSummary?> = _dashboardSummary.asStateFlow()
+    private val _dashboardSummary = MutableStateFlow<Any?>(null)
+    val dashboardSummary: StateFlow<Any?> = _dashboardSummary.asStateFlow()
 
     private val _isAiLoading = MutableStateFlow(false)
     val isAiLoading: StateFlow<Boolean> = _isAiLoading.asStateFlow()
 
     // ═══════════════════════════════════════════════════════════════════════════════
-    // Behavior Learning Engine State
+    // Behavior Learning Engine State (stub for now - AI will be implemented later)
     // ═══════════════════════════════════════════════════════════════════════════════
-    private val _userBehaviorProfile = MutableStateFlow<UserBehaviorProfile?>(null)
-    val userBehaviorProfile: StateFlow<UserBehaviorProfile?> = _userBehaviorProfile.asStateFlow()
+    private val _userBehaviorProfile = MutableStateFlow<Any?>(null)
+    val userBehaviorProfile: StateFlow<Any?> = _userBehaviorProfile.asStateFlow()
 
-    private val _spendingPrediction = MutableStateFlow<BehaviorSpendingPrediction?>(null)
-    val spendingPrediction: StateFlow<BehaviorSpendingPrediction?> = _spendingPrediction.asStateFlow()
+    private val _spendingPrediction = MutableStateFlow<Any?>(null)
+    val spendingPrediction: StateFlow<Any?> = _spendingPrediction.asStateFlow()
 
-    private val _incomePrediction = MutableStateFlow<IncomePrediction?>(null)
-    val incomePrediction: StateFlow<IncomePrediction?> = _incomePrediction.asStateFlow()
+    private val _incomePrediction = MutableStateFlow<Any?>(null)
+    val incomePrediction: StateFlow<Any?> = _incomePrediction.asStateFlow()
 
-    private val _riskAssessment = MutableStateFlow<RiskAssessment?>(null)
-    val riskAssessment: StateFlow<RiskAssessment?> = _riskAssessment.asStateFlow()
+    private val _riskAssessment = MutableStateFlow<Any?>(null)
+    val riskAssessment: StateFlow<Any?> = _riskAssessment.asStateFlow()
 
-    private val _anomalies = MutableStateFlow<List<AnomalyReport>>(emptyList())
-    val anomalies: StateFlow<List<AnomalyReport>> = _anomalies.asStateFlow()
+    private val _anomalies = MutableStateFlow<List<Any>>(emptyList())
+    val anomalies: StateFlow<List<Any>> = _anomalies.asStateFlow()
 
     private val _isBehaviorModelTrained = MutableStateFlow(false)
     val isBehaviorModelTrained: StateFlow<Boolean> = _isBehaviorModelTrained.asStateFlow()
@@ -146,11 +132,6 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     init {
-        // Initialize AI Pipeline
-        viewModelScope.launch {
-            aiPipeline.initialize()
-            refreshAiAnalysis()
-        }
 
         // Load loan payments
         viewModelScope.launch {
@@ -204,6 +185,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     // Bills
     val unpaidBills: StateFlow<List<Bill>> = repository.getUnpaidBills()
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    val paidBills: StateFlow<List<Bill>> = repository.getPaidBills()
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     val overdueBills: StateFlow<List<Bill>> = repository.getOverdueBills()
@@ -327,6 +311,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun markBillAsPaid(billId: Long, isPaid: Boolean) {
         viewModelScope.launch {
+            // If marking as paid, create an expense record
+            if (isPaid) {
+                val bill = repository.getBillById(billId)
+                if (bill != null) {
+                    // Create expense from bill
+                    val expense = Expense(
+                        title = bill.title,
+                        amount = bill.amount,
+                        category = bill.category,
+                        notes = "Auto-created from paid bill",
+                        date = System.currentTimeMillis()
+                    )
+                    repository.addExpense(expense)
+                }
+            }
+            // Mark the bill as paid/unpaid
             repository.markBillAsPaid(billId, isPaid)
         }
     }
@@ -551,26 +551,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun analyzeShoppingList(listId: Long) {
         viewModelScope.launch {
-            val listWithItems = shoppingDao.getShoppingListWithItems(listId) ?: return@launch
-            val summary = financialSummary.value
-
-            val analysis = shoppingAnalyzer.analyzeShoppingList(
-                items = listWithItems.items,
-                budget = listWithItems.shoppingList.totalBudget,
-                monthlyIncome = summary.totalIncome,
-                monthlyExpenses = summary.totalExpenses,
-                savingsRate = summary.savingsRate
-            )
-
-            // Update items with AI recommendations
-            analysis.itemAnalysis.forEach { itemAnalysis ->
-                shoppingDao.updateItemAIAnalysis(
-                    itemId = itemAnalysis.itemId,
-                    recommendation = itemAnalysis.recommendation,
-                    suggestedQty = itemAnalysis.suggestedQuantity,
-                    reason = itemAnalysis.reason
-                )
-            }
+            // Shopping list analysis will be implemented when AI is ready
+            // For now, this is a stub
         }
     }
 
@@ -595,137 +577,78 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════
-    // AI Pipeline Methods
+    // AI Pipeline Methods (Stub - Will be implemented later)
     // ═══════════════════════════════════════════════════════════════════════════════
 
     /**
-     * Refresh AI analysis
+     * Refresh AI analysis (stub)
      */
     fun refreshAiAnalysis() {
-        viewModelScope.launch {
-            _isAiLoading.value = true
-            try {
-                val analysis = aiPipeline.runFullAnalysis(forceRefresh = true)
-                _aiAnalysis.value = analysis
-                _dashboardSummary.value = aiPipeline.getDashboardSummary()
-            } catch (e: Exception) {
-                // Handle error gracefully
-                e.printStackTrace()
-            } finally {
-                _isAiLoading.value = false
-            }
-        }
+        // Will be implemented when AI pipeline is ready
     }
 
     /**
-     * Get notification insight from AI
+     * Get notification insight from AI (stub)
      */
     suspend fun getAiNotificationInsight(): String {
-        return try {
-            aiPipeline.getNotificationInsight()
-        } catch (e: Exception) {
-            "Keep tracking your finances!"
-        }
+        return "Keep tracking your finances!"
     }
 
     /**
-     * Analyze a single transaction
+     * Analyze a single transaction (stub)
      */
-    suspend fun analyzeTransaction(expense: Expense): TransactionAnalysis? {
-        return try {
-            aiPipeline.analyzeTransaction(expense)
-        } catch (e: Exception) {
-            null
-        }
+    suspend fun analyzeTransaction(expense: Expense): Any? {
+        return null
     }
 
     /**
-     * Invalidate AI cache when data changes
+     * Invalidate AI cache when data changes (stub)
      */
     private fun invalidateAiCache() {
-        aiPipeline.invalidateCache()
-        refreshAiAnalysis()
-        // Also update behavior model predictions
-        refreshBehaviorPredictions()
+        // Will be implemented when AI pipeline is ready
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════
-    // Behavior Learning Engine Methods
+    // Behavior Learning Engine Methods (Stub - Will be implemented later)
     // ═══════════════════════════════════════════════════════════════════════════════
 
     /**
-     * Train the behavior learning model on historical data
+     * Train the behavior learning model on historical data (stub)
      */
     fun trainBehaviorModel() {
-        viewModelScope.launch {
-            _isAiLoading.value = true
-            try {
-                val expenseList = expenses.value
-                val incomeList = incomes.value
-
-                val result = behaviorEngine.trainModel(expenseList, incomeList)
-
-                if (result.success) {
-                    _isBehaviorModelTrained.value = true
-                    _userBehaviorProfile.value = behaviorEngine.getUserProfile()
-
-                    // Generate initial predictions
-                    refreshBehaviorPredictions()
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            } finally {
-                _isAiLoading.value = false
-            }
-        }
+        // Will be implemented when ML models are ready
     }
 
     /**
-     * Refresh behavior predictions
+     * Refresh behavior predictions (stub)
      */
     private fun refreshBehaviorPredictions() {
-        viewModelScope.launch {
-            try {
-                val expenseList = expenses.value
-                val incomeList = incomes.value
-
-                if (expenseList.isNotEmpty()) {
-                    _spendingPrediction.value = behaviorEngine.predictSpending(30, expenseList)
-                    _anomalies.value = behaviorEngine.detectAnomalies(expenseList)
-                }
-
-                if (incomeList.isNotEmpty()) {
-                    _incomePrediction.value = behaviorEngine.predictIncome(30, incomeList)
-                }
-
-                if (expenseList.isNotEmpty() || incomeList.isNotEmpty()) {
-                    _riskAssessment.value = behaviorEngine.assessRisk(expenseList, incomeList)
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-            }
-        }
+        // Will be implemented when ML models are ready
     }
 
     /**
-     * Predict goal completion probability
+     * Predict goal completion probability (stub)
      */
     suspend fun predictGoalCompletion(
         targetAmount: Double,
         currentAmount: Double,
         monthsRemaining: Int
     ): GoalPrediction {
-        return behaviorEngine.predictGoalCompletion(
-            targetAmount = targetAmount,
-            currentAmount = currentAmount,
-            monthsRemaining = monthsRemaining,
-            expenses = expenses.value,
-            incomes = incomes.value
+        // Simple rule-based prediction for now
+        val requiredMonthly = (targetAmount - currentAmount) / monthsRemaining.coerceAtLeast(1)
+        val averageSavings = financialSummary.value.netSavings.coerceAtLeast(0.0)
+        val probability = if (requiredMonthly <= averageSavings) 0.85 else 0.5
+
+        return GoalPrediction(
+            probability = probability,
+            confidence = 0.7,
+            predictedCompletionDate = System.currentTimeMillis() + (monthsRemaining * 30L * 24 * 60 * 60 * 1000),
+            suggestions = listOf("Keep saving consistently to reach your goal")
         )
     }
 
     /**
-     * Predict loan repayment probability
+     * Predict loan repayment probability (stub)
      */
     suspend fun predictLoanRepayment(
         loanAmount: Double,
@@ -733,33 +656,53 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         interestRate: Double,
         months: Int
     ): LoanRepaymentPrediction {
-        return behaviorEngine.predictLoanRepayment(
-            loanAmount = loanAmount,
-            monthlyPayment = monthlyPayment,
-            interestRate = interestRate,
-            months = months,
-            expenses = expenses.value,
-            incomes = incomes.value
+        val averageIncome = financialSummary.value.totalIncome
+        val canAfford = monthlyPayment <= (averageIncome * 0.3)
+
+        return LoanRepaymentPrediction(
+            probability = if (canAfford) 0.9 else 0.6,
+            confidence = 0.7,
+            riskLevel = if (canAfford) ModelRiskLevel.LOW else ModelRiskLevel.MEDIUM,
+            suggestions = listOf("Keep your loan payments under 30% of income")
         )
     }
 
     /**
-     * Get spending patterns identified by the ML model
+     * Get spending patterns identified by the ML model (stub)
      */
     fun getSpendingPatterns(): List<SpendingPattern> {
-        return behaviorEngine.getSpendingPatterns()
+        return emptyList()
     }
 
     /**
-     * Get user behavior profile
+     * Get user behavior profile (stub)
      */
-    fun getBehaviorProfile(): UserBehaviorProfile? {
-        return behaviorEngine.getUserProfile()
+    fun getBehaviorProfile(): Any? {
+        return null
+    }
+
+    /**
+     * Clear all data from the database
+     */
+    suspend fun clearAllData() {
+        viewModelScope.launch {
+            try {
+                // Clear all tables in the database
+                database.expenseDao().deleteAll()
+                database.incomeDao().deleteAll()
+                database.billDao().deleteAll()
+                database.budgetDao().deleteAll()
+                goalDao.deleteAll()
+                loanDao.deleteAll()
+                shoppingDao.deleteAllLists()
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
     }
 
     override fun onCleared() {
         super.onCleared()
-        aiPipeline.cleanup()
     }
 }
 

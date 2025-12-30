@@ -66,3 +66,29 @@ enum class InsightType {
 enum class InsightPriority {
     LOW, MEDIUM, HIGH, CRITICAL
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// AI/ML Prediction Models (stub implementations)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+data class GoalPrediction(
+    val probability: Double,
+    val confidence: Double = 0.7,
+    val predictedCompletionDate: Long = System.currentTimeMillis(),
+    val suggestions: List<String> = emptyList()
+)
+
+data class LoanRepaymentPrediction(
+    val probability: Double,
+    val confidence: Double = 0.7,
+    val riskLevel: RiskLevel = RiskLevel.MEDIUM,
+    val suggestions: List<String> = emptyList()
+)
+
+data class SpendingPattern(
+    val category: String,
+    val averageAmount: Double,
+    val frequency: String,
+    val trend: String = "stable"
+)
+

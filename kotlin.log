@@ -1,0 +1,210 @@
+Initialized native services in: /Users/danielkinyua/.gradle/native
+Initialized jansi services in: /Users/danielkinyua/.gradle/native
+The client will now receive all logging from the daemon (pid: 61224). The daemon log file: /Users/danielkinyua/.gradle/daemon/8.13/daemon-61224.out.log
+Starting 17th build in daemon [uptime: 44 mins 43.047 secs, performance: 100%, GC rate: 0.00/s, heap usage: 0% of 2 GiB]
+Using 14 worker leases.
+Now considering [/Users/danielkinyua/Downloads/projects/budgie] as hierarchies to watch
+Watching the file system is configured to be enabled if available
+File system watching is active
+Starting Build
+Settings evaluated using settings file '/Users/danielkinyua/Downloads/projects/budgie/settings.gradle.kts'.
+Projects loaded. Root project using build file '/Users/danielkinyua/Downloads/projects/budgie/build.gradle.kts'.
+Included projects: [root project 'budgie', project ':app']
+
+> Configure project :
+Evaluating root project 'budgie' using build file '/Users/danielkinyua/Downloads/projects/budgie/build.gradle.kts'.
+Resolved plugin [id: 'com.android.application', version: '8.13.2', apply: false]
+Resolved plugin [id: 'org.jetbrains.kotlin.android', version: '2.0.21', apply: false]
+Resolved plugin [id: 'org.jetbrains.kotlin.plugin.compose', version: '2.0.21', apply: false]
+
+> Configure project :app
+Evaluating project ':app' using build file '/Users/danielkinyua/Downloads/projects/budgie/app/build.gradle.kts'.
+Resolved plugin [id: 'com.android.application', version: '8.13.2']
+Resolved plugin [id: 'org.jetbrains.kotlin.android', version: '2.0.21']
+Resolved plugin [id: 'org.jetbrains.kotlin.plugin.compose', version: '2.0.21']
+Resolved plugin [id: 'com.google.devtools.ksp', version: '2.0.21-1.0.25']
+Resolved plugin [id: 'org.jetbrains.kotlin.plugin.serialization', version: '1.9.21']
+Using default execution profile
+Using Kotlin Gradle Plugin gradle85 variant
+Detected Android Gradle Plugin compose compiler configuration
+Detected Android Gradle Plugin compose compiler configuration
+Detected Android Gradle Plugin compose compiler configuration
+Detected Android Gradle Plugin compose compiler configuration
+Detected Android Gradle Plugin compose compiler configuration
+All projects evaluated.
+Adding -Xuse-inline-scopes-numbers Kotlin compiler flag for task :app:compileDebugKotlin
+Task name matched 'compileDebugKotlin'
+Selected primary task 'compileDebugKotlin' from project :
+Tasks to be executed: [task ':app:checkKotlinGradlePluginConfigurationErrors', task ':app:preBuild', task ':app:preDebugBuild', task ':app:checkDebugAarMetadata', task ':app:processDebugNavigationResources', task ':app:compileDebugNavigationResources', task ':app:generateDebugResValues', task ':app:mapDebugSourceSetPaths', task ':app:generateDebugResources', task ':app:mergeDebugResources', task ':app:packageDebugResources', task ':app:parseDebugLocalResources', task ':app:createDebugCompatibleScreenManifests', task ':app:extractDeepLinksDebug', task ':app:processDebugMainManifest', task ':app:processDebugManifest', task ':app:processDebugManifestForPackage', task ':app:processDebugResources', task ':app:kspDebugKotlin', task ':app:compileDebugKotlin']
+Tasks that were excluded: []
+Resolve mutations for :app:checkKotlinGradlePluginConfigurationErrors (Thread[Execution worker,5,main]) started.
+:app:checkKotlinGradlePluginConfigurationErrors (Thread[Execution worker,5,main]) started.
+
+> Task :app:checkKotlinGradlePluginConfigurationErrors SKIPPED
+Skipping task ':app:checkKotlinGradlePluginConfigurationErrors' as task onlyIf 'errorDiagnostics are present' is false.
+Resolve mutations for :app:preBuild (Thread[Execution worker,5,main]) started.
+:app:preBuild (Thread[Execution worker,5,main]) started.
+
+> Task :app:preBuild UP-TO-DATE
+Skipping task ':app:preBuild' as it has no actions.
+Resolve mutations for :app:preDebugBuild (Thread[Execution worker,5,main]) started.
+:app:preDebugBuild (Thread[Execution worker,5,main]) started.
+
+> Task :app:preDebugBuild UP-TO-DATE
+Skipping task ':app:preDebugBuild' as it has no actions.
+Resolve mutations for :app:checkDebugAarMetadata (Thread[Execution worker,5,main]) started.
+:app:checkDebugAarMetadata (Thread[Execution worker,5,main]) started.
+
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+Caching disabled for task ':app:checkDebugAarMetadata' because:
+  Build cache is disabled
+  Caching has been disabled for the task
+Skipping task ':app:checkDebugAarMetadata' as it is up-to-date.
+Resolve mutations for :app:processDebugNavigationResources (Thread[Execution worker,5,main]) started.
+:app:processDebugNavigationResources (Thread[Execution worker,5,main]) started.
+
+> Task :app:processDebugNavigationResources UP-TO-DATE
+Caching disabled for task ':app:processDebugNavigationResources' because:
+  Build cache is disabled
+Skipping task ':app:processDebugNavigationResources' as it is up-to-date.
+Resolve mutations for :app:compileDebugNavigationResources (Thread[Execution worker,5,main]) started.
+:app:compileDebugNavigationResources (Thread[Execution worker,5,main]) started.
+
+> Task :app:compileDebugNavigationResources UP-TO-DATE
+Caching disabled for task ':app:compileDebugNavigationResources' because:
+  Build cache is disabled
+Skipping task ':app:compileDebugNavigationResources' as it is up-to-date.
+Resolve mutations for :app:generateDebugResValues (Thread[Execution worker,5,main]) started.
+:app:generateDebugResValues (Thread[Execution worker,5,main]) started.
+
+> Task :app:generateDebugResValues UP-TO-DATE
+Caching disabled for task ':app:generateDebugResValues' because:
+  Build cache is disabled
+Skipping task ':app:generateDebugResValues' as it is up-to-date.
+Resolve mutations for :app:mapDebugSourceSetPaths (Thread[Execution worker,5,main]) started.
+:app:mapDebugSourceSetPaths (Thread[Execution worker,5,main]) started.
+
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+Caching disabled for task ':app:mapDebugSourceSetPaths' because:
+  Build cache is disabled
+  Caching has been disabled for the task
+Skipping task ':app:mapDebugSourceSetPaths' as it is up-to-date.
+Resolve mutations for :app:generateDebugResources (Thread[Execution worker,5,main]) started.
+:app:generateDebugResources (Thread[Execution worker,5,main]) started.
+
+> Task :app:generateDebugResources UP-TO-DATE
+Caching disabled for task ':app:generateDebugResources' because:
+  Build cache is disabled
+Skipping task ':app:generateDebugResources' as it is up-to-date.
+Resolve mutations for :app:mergeDebugResources (Thread[Execution worker,5,main]) started.
+:app:mergeDebugResources (Thread[Execution worker,5,main]) started.
+
+> Task :app:mergeDebugResources UP-TO-DATE
+Caching disabled for task ':app:mergeDebugResources' because:
+  Build cache is disabled
+Skipping task ':app:mergeDebugResources' as it is up-to-date.
+Resolve mutations for :app:packageDebugResources (Thread[Execution worker,5,main]) started.
+:app:packageDebugResources (Thread[Execution worker,5,main]) started.
+
+> Task :app:packageDebugResources UP-TO-DATE
+Caching disabled for task ':app:packageDebugResources' because:
+  Build cache is disabled
+Skipping task ':app:packageDebugResources' as it is up-to-date.
+Resolve mutations for :app:parseDebugLocalResources (Thread[Execution worker,5,main]) started.
+:app:parseDebugLocalResources (Thread[Execution worker,5,main]) started.
+
+> Task :app:parseDebugLocalResources UP-TO-DATE
+Caching disabled for task ':app:parseDebugLocalResources' because:
+  Build cache is disabled
+Skipping task ':app:parseDebugLocalResources' as it is up-to-date.
+Resolve mutations for :app:createDebugCompatibleScreenManifests (Thread[Execution worker,5,main]) started.
+:app:createDebugCompatibleScreenManifests (Thread[Execution worker,5,main]) started.
+
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+Caching disabled for task ':app:createDebugCompatibleScreenManifests' because:
+  Build cache is disabled
+  Caching has been disabled for the task
+Skipping task ':app:createDebugCompatibleScreenManifests' as it is up-to-date.
+Resolve mutations for :app:extractDeepLinksDebug (Thread[Execution worker,5,main]) started.
+:app:extractDeepLinksDebug (Thread[Execution worker,5,main]) started.
+
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+Caching disabled for task ':app:extractDeepLinksDebug' because:
+  Build cache is disabled
+Skipping task ':app:extractDeepLinksDebug' as it is up-to-date.
+Resolve mutations for :app:processDebugMainManifest (Thread[Execution worker,5,main]) started.
+:app:processDebugMainManifest (Thread[Execution worker,5,main]) started.
+
+> Task :app:processDebugMainManifest UP-TO-DATE
+Caching disabled for task ':app:processDebugMainManifest' because:
+  Build cache is disabled
+Skipping task ':app:processDebugMainManifest' as it is up-to-date.
+Resolve mutations for :app:processDebugManifest (Thread[Execution worker,5,main]) started.
+:app:processDebugManifest (Thread[Execution worker,5,main]) started.
+
+> Task :app:processDebugManifest UP-TO-DATE
+Caching disabled for task ':app:processDebugManifest' because:
+  Build cache is disabled
+Skipping task ':app:processDebugManifest' as it is up-to-date.
+Resolve mutations for :app:processDebugManifestForPackage (Thread[Execution worker,5,main]) started.
+:app:processDebugManifestForPackage (Thread[Execution worker,5,main]) started.
+
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+Custom actions are attached to task ':app:processDebugManifestForPackage'.
+Caching disabled for task ':app:processDebugManifestForPackage' because:
+  Build cache is disabled
+Skipping task ':app:processDebugManifestForPackage' as it is up-to-date.
+Resolve mutations for :app:processDebugResources (Thread[Execution worker,5,main]) started.
+:app:processDebugResources (Thread[Execution worker,5,main]) started.
+
+> Task :app:processDebugResources UP-TO-DATE
+Caching disabled for task ':app:processDebugResources' because:
+  Build cache is disabled
+Skipping task ':app:processDebugResources' as it is up-to-date.
+Resolve mutations for :app:kspDebugKotlin (Thread[Execution worker,5,main]) started.
+:app:kspDebugKotlin (Thread[Execution worker,5,main]) started.
+
+> Task :app:kspDebugKotlin
+file or directory '/Users/danielkinyua/Downloads/projects/budgie/app/src/debug/kotlin', not found
+file or directory '/Users/danielkinyua/Downloads/projects/budgie/app/src/debug/java', not found
+file or directory '/Users/danielkinyua/Downloads/projects/budgie/app/src/main/kotlin', not found
+file or directory '/Users/danielkinyua/Downloads/projects/budgie/app/src/debug/java', not found
+Adding -Xuse-inline-scopes-numbers Kotlin compiler flag for task :app:compileDebugAndroidTestKotlin
+file or directory '/Users/danielkinyua/Downloads/projects/budgie/app/src/debug/kotlin', not found
+file or directory '/Users/danielkinyua/Downloads/projects/budgie/app/src/debug/java', not found
+file or directory '/Users/danielkinyua/Downloads/projects/budgie/app/src/main/kotlin', not found
+file or directory '/Users/danielkinyua/Downloads/projects/budgie/app/src/debug/java', not found
+Caching disabled for task ':app:kspDebugKotlin' because:
+  Build cache is disabled
+Task ':app:kspDebugKotlin' is not up-to-date because:
+  Task has failed previously.
+The input changes require a full rebuild for incremental task ':app:kspDebugKotlin'.
+file or directory '/Users/danielkinyua/Downloads/projects/budgie/app/src/debug/kotlin', not found
+file or directory '/Users/danielkinyua/Downloads/projects/budgie/app/src/debug/java', not found
+file or directory '/Users/danielkinyua/Downloads/projects/budgie/app/src/main/kotlin', not found
+file or directory '/Users/danielkinyua/Downloads/projects/budgie/app/src/debug/java', not found
+file or directory '/Users/danielkinyua/Downloads/projects/budgie/app/src/debug/kotlin', not found
+file or directory '/Users/danielkinyua/Downloads/projects/budgie/app/src/debug/java', not found
+file or directory '/Users/danielkinyua/Downloads/projects/budgie/app/src/main/kotlin', not found
+file or directory '/Users/danielkinyua/Downloads/projects/budgie/app/src/debug/kotlin', not found
+file or directory '/Users/danielkinyua/Downloads/projects/budgie/app/src/debug/java', not found
+file or directory '/Users/danielkinyua/Downloads/projects/budgie/app/src/main/kotlin', not found
+file or directory '/Users/danielkinyua/Downloads/projects/budgie/app/src/debug/java', not found
+file or directory '/Users/danielkinyua/Downloads/projects/budgie/app/src/debug/kotlin', not found
+file or directory '/Users/danielkinyua/Downloads/projects/budgie/app/src/debug/java', not found
+file or directory '/Users/danielkinyua/Downloads/projects/budgie/app/src/main/kotlin', not found
+file or directory '/Users/danielkinyua/Downloads/projects/budgie/app/src/debug/java', not found
+file or directory '/Users/danielkinyua/Downloads/projects/budgie/app/src/debug/kotlin', not found
+file or directory '/Users/danielkinyua/Downloads/projects/budgie/app/src/debug/java', not found
+file or directory '/Users/danielkinyua/Downloads/projects/budgie/app/src/main/kotlin', not found
+file or directory '/Users/danielkinyua/Downloads/projects/budgie/app/src/debug/java', not found
+Kotlin source files: /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/viewmodel/MainViewModel.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/viewmodel/ModelDownloadViewModel.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/navigation/BudgieNavigation.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/navigation/Screen.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/utils/ContextExt.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/screens/LockScreen.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/screens/WealthProjectionScreen.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/screens/BirthdayCelebrationScreen.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/screens/BillsScreen.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/screens/ExpenseIncomeScreens.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/screens/LoansScreen.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/screens/ExportScreen.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/screens/DashboardComponents.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/screens/ShoppingListScreen.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/screens/DashboardDialogs.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/screens/BudgetScreen.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/screens/MenuScreens.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/screens/DashboardScreen.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/screens/InsightsInvestmentsScreen.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/screens/GoalsScreen.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/screens/AIChatScreen.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/screens/InvestmentsScreen.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/screens/SplashScreen.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/screens/NotificationsScreen.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/screens/OnboardingScreen.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/screens/BiometricDiagnosticsScreen.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/components/ModelDownloadComponents.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/components/AIDashboardCard.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/components/ExpenditureChart.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/components/CommonComponents.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/theme/Color.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/theme/Theme.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/theme/Type.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ui/theme/WealthTheme.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/MainActivity.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/util/ExportManager.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/security/SecurityManager.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ai/pipeline/AnomalyDetector.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ai/pipeline/InsightGenerator.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ai/pipeline/FeatureEngineer.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ai/pipeline/RiskScorer.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ai/pipeline/TrendForecaster.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ai/pipeline/FinancialAIPipeline.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ai/pipeline/BehaviorClusterer.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ai/LightweightRouter.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ai/IntentExtractor.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ai/FinancialAIEngine.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ai/phi3/Phi3InferenceEngine.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ai/AIModels.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ai/ModelDownloadManager.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ai/FinancialLearner.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ai/QwenReasoningEngine.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ai/ConversationalAI.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ai/learner/SuperLearnerEngine.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ai/learner/FinancialLearnerEngine.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ai/learner/LearnerModels.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ai/learner/LearnerMath.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ai/ml/OnDeviceAIEngine.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ai/ml/BehaviorLearningEngine.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ai/ml/TFLiteSpendingPredictor.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ai/ml/BudgetOptimizer.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ai/IntelligentFinancialAssistant.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ai/ShoppingListAnalyzer.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ai/SuperBrain.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ai/BudgieChatOrchestrator.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ai/FinancialAdvisor.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ai/ModelDownloadViewModel.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ai/conversational/ConversationalAI.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ai/FinancialDataEngine.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/ai/QwenLLMEngine.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/service/NetworkChangeReceiver.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/service/ModelDownloadService.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/data/repository/NotificationRepository.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/data/repository/FinanceRepository.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/data/preferences/UserPreferencesManager.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/data/local/UtilityReadingDao.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/data/local/AppNotificationDao.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/data/local/ShoppingDao.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/data/local/IncomeDao.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/data/local/Converters.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/data/local/BudgieDatabase.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/data/local/NotificationDao.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/data/local/BudgetDao.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/data/local/GoalLoanDao.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/data/local/BillDao.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/data/local/ExpenseDao.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/data/model/GoalModels.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/data/model/FinancialModels.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/data/model/LoanModels.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/data/model/NotificationModels.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/data/model/Bill.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/data/model/Income.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/data/model/UserProfile.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/data/model/Expense.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/data/model/ShoppingModels.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/data/model/Notification.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/data/model/Budget.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/data/model/UtilityReading.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/notifications/BudgieNotificationManager.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/notifications/NotificationWorkers.kt, /Users/danielkinyua/Downloads/projects/budgie/app/src/main/java/com/example/budgie/notifications/NotificationHelper.kt
+Java source files: 
+Script source files: 
+Script file extensions: 
+[KOTLIN] Kotlin compilation 'jdkHome' argument: null
+Finished executing kotlin compiler using DAEMON strategy
+
+> Task :app:kspDebugKotlin FAILED
+16 actionable tasks: 1 executed, 15 up-to-date
+Watched directory hierarchies: [/Users/danielkinyua/Downloads/projects/budgie]
