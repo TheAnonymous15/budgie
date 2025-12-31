@@ -63,7 +63,7 @@ class NotificationRepository private constructor(context: Context) {
     // WRITE OPERATIONS
     // ═══════════════════════════════════════════════════════════════════════════════
 
-    suspend fun markAsRead(id: Long) =
+    suspend fun markAsRead(id: String) =
         notificationDao.markAsRead(id)
 
     suspend fun markAllAsRead() =
@@ -72,13 +72,13 @@ class NotificationRepository private constructor(context: Context) {
     suspend fun markCategoryAsRead(category: NotificationCategory) =
         notificationDao.markCategoryAsRead(category)
 
-    suspend fun dismissNotification(id: Long) =
+    suspend fun dismissNotification(id: String) =
         notificationDao.dismissNotification(id)
 
-    suspend fun archiveNotification(id: Long) =
+    suspend fun archiveNotification(id: String) =
         notificationDao.archiveNotification(id)
 
-    suspend fun deleteNotification(id: Long) =
+    suspend fun deleteNotification(id: String) =
         notificationDao.deleteById(id)
 
     suspend fun deleteAllRead() =
@@ -106,7 +106,7 @@ class NotificationRepository private constructor(context: Context) {
         actionRoute: String? = null,
         iconType: String = "notifications",
         accentColor: String = "#0FAE96"
-    ): Long {
+    ): String {
         val notification = AppNotification(
             category = category,
             title = title,
@@ -116,7 +116,8 @@ class NotificationRepository private constructor(context: Context) {
             iconType = iconType,
             accentColor = accentColor
         )
-        return notificationDao.insertNotification(notification)
+        notificationDao.insertNotification(notification)
+        return notification.id
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════
@@ -124,7 +125,7 @@ class NotificationRepository private constructor(context: Context) {
     // ═══════════════════════════════════════════════════════════════════════════════
 
     suspend fun createBillNotification(
-        billId: Long,
+        billId: String,
         type: BillNotificationType,
         billName: String,
         dueDate: Long,
@@ -132,7 +133,7 @@ class NotificationRepository private constructor(context: Context) {
         daysUntilDue: Int,
         isRecurring: Boolean = false,
         isPaid: Boolean = false
-    ): Long {
+    ): String {
         val (title, message, priority) = when (type) {
             BillNotificationType.DUE_REMINDER -> Triple(
                 "📋 Bill Due Soon",
@@ -180,10 +181,10 @@ class NotificationRepository private constructor(context: Context) {
             iconType = "receipt",
             accentColor = if (type == BillNotificationType.OVERDUE) "#E57373" else "#FFB74D"
         )
-        val notificationId = notificationDao.insertNotification(notification)
+        notificationDao.insertNotification(notification)
 
         val detail = BillNotificationDetail(
-            notificationId = notificationId,
+            notificationId = notification.id,
             billId = billId,
             type = type,
             billName = billName,
@@ -195,7 +196,7 @@ class NotificationRepository private constructor(context: Context) {
         )
         notificationDao.insertBillNotification(detail)
 
-        return notificationId
+        return notification.id
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════
@@ -203,12 +204,12 @@ class NotificationRepository private constructor(context: Context) {
     // ═══════════════════════════════════════════════════════════════════════════════
 
     suspend fun createBudgetNotification(
-        budgetId: Long,
+        budgetId: String,
         type: BudgetNotificationType,
         categoryName: String,
         budgetLimit: Double,
         currentSpend: Double
-    ): Long {
+    ): String {
         val percentageUsed = (currentSpend / budgetLimit) * 100
         val remainingAmount = budgetLimit - currentSpend
 
@@ -268,10 +269,10 @@ class NotificationRepository private constructor(context: Context) {
                 else -> "#0FAE96"
             }
         )
-        val notificationId = notificationDao.insertNotification(notification)
+        notificationDao.insertNotification(notification)
 
         val detail = BudgetNotificationDetail(
-            notificationId = notificationId,
+            notificationId = notification.id,
             budgetId = budgetId,
             type = type,
             categoryName = categoryName,
@@ -282,7 +283,7 @@ class NotificationRepository private constructor(context: Context) {
         )
         notificationDao.insertBudgetNotification(detail)
 
-        return notificationId
+        return notification.id
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════
@@ -290,14 +291,14 @@ class NotificationRepository private constructor(context: Context) {
     // ═══════════════════════════════════════════════════════════════════════════════
 
     suspend fun createGoalNotification(
-        goalId: Long,
+        goalId: String,
         type: GoalNotificationType,
         goalName: String,
         targetAmount: Double,
         currentAmount: Double,
         daysRemaining: Int? = null,
         targetDate: Long? = null
-    ): Long {
+    ): String {
         val percentageComplete = (currentAmount / targetAmount) * 100
 
         val (title, message, priority) = when (type) {
@@ -367,10 +368,10 @@ class NotificationRepository private constructor(context: Context) {
             iconType = "flag",
             accentColor = if (type == GoalNotificationType.GOAL_ACHIEVED) "#4CAF50" else "#0FAE96"
         )
-        val notificationId = notificationDao.insertNotification(notification)
+        notificationDao.insertNotification(notification)
 
         val detail = GoalNotificationDetail(
-            notificationId = notificationId,
+            notificationId = notification.id,
             goalId = goalId,
             type = type,
             goalName = goalName,
@@ -382,7 +383,7 @@ class NotificationRepository private constructor(context: Context) {
         )
         notificationDao.insertGoalNotification(detail)
 
-        return notificationId
+        return notification.id
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════
@@ -390,7 +391,7 @@ class NotificationRepository private constructor(context: Context) {
     // ═══════════════════════════════════════════════════════════════════════════════
 
     suspend fun createLoanNotification(
-        loanId: Long,
+        loanId: String,
         type: LoanNotificationType,
         loanName: String,
         remainingBalance: Double,
@@ -400,7 +401,7 @@ class NotificationRepository private constructor(context: Context) {
         daysUntilPayment: Int? = null,
         totalPaid: Double = 0.0,
         interestRate: Double? = null
-    ): Long {
+    ): String {
         val (title, message, priority) = when (type) {
             LoanNotificationType.PAYMENT_DUE -> Triple(
                 "💳 Loan Payment Due",
@@ -467,10 +468,10 @@ class NotificationRepository private constructor(context: Context) {
                 else -> "#5C9CE5"
             }
         )
-        val notificationId = notificationDao.insertNotification(notification)
+        notificationDao.insertNotification(notification)
 
         val detail = LoanNotificationDetail(
-            notificationId = notificationId,
+            notificationId = notification.id,
             loanId = loanId,
             type = type,
             loanName = loanName,
@@ -484,7 +485,7 @@ class NotificationRepository private constructor(context: Context) {
         )
         notificationDao.insertLoanNotification(detail)
 
-        return notificationId
+        return notification.id
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════
@@ -494,12 +495,12 @@ class NotificationRepository private constructor(context: Context) {
     suspend fun createExpenseNotification(
         type: ExpenseNotificationType,
         amount: Double,
-        expenseId: Long? = null,
+        expenseId: String? = null,
         categoryName: String? = null,
         merchantName: String? = null,
         description: String? = null,
         averageForCategory: Double? = null
-    ): Long {
+    ): String {
         val deviationPercent = if (averageForCategory != null && averageForCategory > 0) {
             ((amount - averageForCategory) / averageForCategory) * 100
         } else null
@@ -556,10 +557,10 @@ class NotificationRepository private constructor(context: Context) {
             iconType = "shopping_cart",
             accentColor = "#E57373"
         )
-        val notificationId = notificationDao.insertNotification(notification)
+        notificationDao.insertNotification(notification)
 
         val detail = ExpenseNotificationDetail(
-            notificationId = notificationId,
+            notificationId = notification.id,
             expenseId = expenseId,
             type = type,
             amount = amount,
@@ -571,7 +572,7 @@ class NotificationRepository private constructor(context: Context) {
         )
         notificationDao.insertExpenseNotification(detail)
 
-        return notificationId
+        return notification.id
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════
@@ -581,12 +582,12 @@ class NotificationRepository private constructor(context: Context) {
     suspend fun createIncomeNotification(
         type: IncomeNotificationType,
         amount: Double? = null,
-        incomeId: Long? = null,
+        incomeId: String? = null,
         sourceName: String? = null,
         expectedDate: Long? = null,
         variance: Double? = null,
         isRecurring: Boolean = false
-    ): Long {
+    ): String {
         val (title, message, priority) = when (type) {
             IncomeNotificationType.INCOME_RECEIVED -> Triple(
                 "💰 Income Received",
@@ -634,10 +635,10 @@ class NotificationRepository private constructor(context: Context) {
             iconType = "attach_money",
             accentColor = "#4CAF50"
         )
-        val notificationId = notificationDao.insertNotification(notification)
+        notificationDao.insertNotification(notification)
 
         val detail = IncomeNotificationDetail(
-            notificationId = notificationId,
+            notificationId = notification.id,
             incomeId = incomeId,
             type = type,
             amount = amount,
@@ -648,7 +649,7 @@ class NotificationRepository private constructor(context: Context) {
         )
         notificationDao.insertIncomeNotification(detail)
 
-        return notificationId
+        return notification.id
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════
@@ -661,7 +662,7 @@ class NotificationRepository private constructor(context: Context) {
         actionRequired: Boolean = false,
         securityLevel: String = "INFO",
         attemptCount: Int? = null
-    ): Long {
+    ): String {
         val (title, message, priority) = when (type) {
             SecurityNotificationType.LOGIN_SUCCESS -> Triple(
                 "🔓 Login Successful",
@@ -743,10 +744,10 @@ class NotificationRepository private constructor(context: Context) {
                 else -> "#5C9CE5"
             }
         )
-        val notificationId = notificationDao.insertNotification(notification)
+        notificationDao.insertNotification(notification)
 
         val detail = SecurityNotificationDetail(
-            notificationId = notificationId,
+            notificationId = notification.id,
             type = type,
             deviceInfo = deviceInfo,
             actionRequired = actionRequired,
@@ -755,7 +756,7 @@ class NotificationRepository private constructor(context: Context) {
         )
         notificationDao.insertSecurityNotification(detail)
 
-        return notificationId
+        return notification.id
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════
@@ -771,7 +772,7 @@ class NotificationRepository private constructor(context: Context) {
         actionUrl: String? = null,
         metadata: String? = null,
         summaryData: String? = null
-    ): Long {
+    ): String {
         val (title, message, priority) = when (type) {
             SystemNotificationType.APP_UPDATE -> Triple(
                 customTitle ?: "🆕 Update Available",
@@ -849,10 +850,10 @@ class NotificationRepository private constructor(context: Context) {
             iconType = "settings",
             accentColor = "#9575CD"
         )
-        val notificationId = notificationDao.insertNotification(notification)
+        notificationDao.insertNotification(notification)
 
         val detail = SystemNotificationDetail(
-            notificationId = notificationId,
+            notificationId = notification.id,
             type = type,
             version = version,
             featureName = featureName,
@@ -862,7 +863,7 @@ class NotificationRepository private constructor(context: Context) {
         )
         notificationDao.insertSystemNotification(detail)
 
-        return notificationId
+        return notification.id
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════
@@ -880,7 +881,7 @@ class NotificationRepository private constructor(context: Context) {
         confidence: Double? = null,
         category: String? = null,
         timeframe: String? = null
-    ): Long {
+    ): String {
         val priority = when (type) {
             InsightNotificationType.ANOMALY -> AppNotificationPriority.HIGH
             InsightNotificationType.ACHIEVEMENT -> AppNotificationPriority.MEDIUM
@@ -896,10 +897,10 @@ class NotificationRepository private constructor(context: Context) {
             iconType = "lightbulb",
             accentColor = "#5C9CE5"
         )
-        val notificationId = notificationDao.insertNotification(notification)
+        notificationDao.insertNotification(notification)
 
         val detail = InsightNotificationDetail(
-            notificationId = notificationId,
+            notificationId = notification.id,
             type = type,
             insightTitle = insightTitle,
             insightDetail = insightDetail,
@@ -913,7 +914,7 @@ class NotificationRepository private constructor(context: Context) {
         )
         notificationDao.insertInsightNotification(detail)
 
-        return notificationId
+        return notification.id
     }
 
     // ═══════════════════════════════════════════════════════════════════════════════
@@ -922,14 +923,14 @@ class NotificationRepository private constructor(context: Context) {
 
     suspend fun createShoppingNotification(
         type: ShoppingNotificationType,
-        listId: Long? = null,
-        itemId: Long? = null,
+        listId: String? = null,
+        itemId: String? = null,
         listName: String? = null,
         itemName: String? = null,
         itemCount: Int? = null,
         estimatedTotal: Double? = null,
         aiRecommendation: String? = null
-    ): Long {
+    ): String {
         val (title, message, priority) = when (type) {
             ShoppingNotificationType.ITEM_REMINDER -> Triple(
                 "🛒 Shopping Reminder",
@@ -982,10 +983,10 @@ class NotificationRepository private constructor(context: Context) {
             iconType = "shopping_bag",
             accentColor = "#FF7043"
         )
-        val notificationId = notificationDao.insertNotification(notification)
+        notificationDao.insertNotification(notification)
 
         val detail = ShoppingNotificationDetail(
-            notificationId = notificationId,
+            notificationId = notification.id,
             listId = listId,
             itemId = itemId,
             type = type,
@@ -997,7 +998,7 @@ class NotificationRepository private constructor(context: Context) {
         )
         notificationDao.insertShoppingNotification(detail)
 
-        return notificationId
+        return notification.id
     }
 }
 

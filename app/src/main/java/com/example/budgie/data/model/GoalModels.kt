@@ -10,8 +10,8 @@ import kotlinx.serialization.Serializable
 @Entity(tableName = "goals")
 @Serializable
 data class FinancialGoal(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
+    @PrimaryKey
+    val id: String = BudgieIdGenerator.generateGoalId(),
     val title: String,
     val description: String = "",
     val targetAmount: Double,
@@ -22,7 +22,7 @@ data class FinancialGoal(
     val savingAmount: Double? = null, // Amount to save per period (user input or calculated)
     val calculatedSavingAmount: Double? = null, // Auto-calculated amount per period
     val isVariableSaving: Boolean = false, // Variable or fixed saving
-    val loanId: Long? = null, // Link to loan if funding via loan
+    val loanId: String? = null, // Link to loan if funding via loan (now String)
     val savingStartDate: Long = System.currentTimeMillis(), // When to start saving
     val isSavingStarted: Boolean = false, // Whether saving has started
     val startDate: Long = System.currentTimeMillis(),
@@ -101,9 +101,9 @@ enum class GoalPriority(val displayName: String) {
 @Entity(tableName = "goal_contributions")
 @Serializable
 data class GoalContribution(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val goalId: Long,
+    @PrimaryKey
+    val id: String = BudgieIdGenerator.generateGoalContributionId(),
+    val goalId: String, // Now String to match FinancialGoal.id
     val amount: Double,
     val date: Long = System.currentTimeMillis(),
     val notes: String = "",

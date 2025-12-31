@@ -20,7 +20,7 @@ interface UtilityReadingDao {
     fun getUtilityNames(): Flow<List<String>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertReading(reading: UtilityReading): Long
+    suspend fun insertReading(reading: UtilityReading)
 
     @Delete
     suspend fun deleteReading(reading: UtilityReading)

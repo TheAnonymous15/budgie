@@ -12,7 +12,7 @@ interface AppNotificationDao {
     // ═══════════════════════════════════════════════════════════════════════════════
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertNotification(notification: AppNotification): Long
+    suspend fun insertNotification(notification: AppNotification)
 
     @Update
     suspend fun updateNotification(notification: AppNotification)
@@ -21,7 +21,7 @@ interface AppNotificationDao {
     suspend fun deleteNotification(notification: AppNotification)
 
     @Query("SELECT * FROM app_notifications WHERE id = :id")
-    suspend fun getNotificationById(id: Long): AppNotification?
+    suspend fun getNotificationById(id: String): AppNotification?
 
     @Query("SELECT * FROM app_notifications WHERE isArchived = 0 ORDER BY createdAt DESC")
     fun getAllActiveNotifications(): Flow<List<AppNotification>>
@@ -51,7 +51,7 @@ interface AppNotificationDao {
     fun getUnreadCountByCategory(category: NotificationCategory): Flow<Int>
 
     @Query("UPDATE app_notifications SET status = 'READ', readAt = :readAt WHERE id = :id")
-    suspend fun markAsRead(id: Long, readAt: Long = System.currentTimeMillis())
+    suspend fun markAsRead(id: String, readAt: Long = System.currentTimeMillis())
 
     @Query("UPDATE app_notifications SET status = 'READ', readAt = :readAt WHERE status = 'UNREAD'")
     suspend fun markAllAsRead(readAt: Long = System.currentTimeMillis())
@@ -60,13 +60,13 @@ interface AppNotificationDao {
     suspend fun markCategoryAsRead(category: NotificationCategory, readAt: Long = System.currentTimeMillis())
 
     @Query("UPDATE app_notifications SET status = 'DISMISSED' WHERE id = :id")
-    suspend fun dismissNotification(id: Long)
+    suspend fun dismissNotification(id: String)
 
     @Query("UPDATE app_notifications SET isArchived = 1 WHERE id = :id")
-    suspend fun archiveNotification(id: Long)
+    suspend fun archiveNotification(id: String)
 
     @Query("DELETE FROM app_notifications WHERE id = :id")
-    suspend fun deleteById(id: Long)
+    suspend fun deleteById(id: String)
 
     @Query("DELETE FROM app_notifications WHERE createdAt < :before AND isArchived = 1")
     suspend fun deleteOldArchivedNotifications(before: Long)
@@ -99,13 +99,13 @@ interface AppNotificationDao {
     // ═══════════════════════════════════════════════════════════════════════════════
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertBillNotification(detail: BillNotificationDetail): Long
+    suspend fun insertBillNotification(detail: BillNotificationDetail)
 
     @Query("SELECT * FROM bill_notifications WHERE notificationId = :notificationId")
-    suspend fun getBillNotificationDetail(notificationId: Long): BillNotificationDetail?
+    suspend fun getBillNotificationDetail(notificationId: String): BillNotificationDetail?
 
     @Query("SELECT * FROM bill_notifications WHERE billId = :billId ORDER BY id DESC")
-    fun getBillNotificationsByBillId(billId: Long): Flow<List<BillNotificationDetail>>
+    fun getBillNotificationsByBillId(billId: String): Flow<List<BillNotificationDetail>>
 
     @Query("""
         SELECT bn.* FROM bill_notifications bn
@@ -120,13 +120,13 @@ interface AppNotificationDao {
     // ═══════════════════════════════════════════════════════════════════════════════
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertBudgetNotification(detail: BudgetNotificationDetail): Long
+    suspend fun insertBudgetNotification(detail: BudgetNotificationDetail)
 
     @Query("SELECT * FROM budget_notifications WHERE notificationId = :notificationId")
-    suspend fun getBudgetNotificationDetail(notificationId: Long): BudgetNotificationDetail?
+    suspend fun getBudgetNotificationDetail(notificationId: String): BudgetNotificationDetail?
 
     @Query("SELECT * FROM budget_notifications WHERE budgetId = :budgetId ORDER BY id DESC")
-    fun getBudgetNotificationsByBudgetId(budgetId: Long): Flow<List<BudgetNotificationDetail>>
+    fun getBudgetNotificationsByBudgetId(budgetId: String): Flow<List<BudgetNotificationDetail>>
 
     @Query("""
         SELECT bn.* FROM budget_notifications bn
@@ -141,13 +141,13 @@ interface AppNotificationDao {
     // ═══════════════════════════════════════════════════════════════════════════════
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertGoalNotification(detail: GoalNotificationDetail): Long
+    suspend fun insertGoalNotification(detail: GoalNotificationDetail)
 
     @Query("SELECT * FROM goal_notifications WHERE notificationId = :notificationId")
-    suspend fun getGoalNotificationDetail(notificationId: Long): GoalNotificationDetail?
+    suspend fun getGoalNotificationDetail(notificationId: String): GoalNotificationDetail?
 
     @Query("SELECT * FROM goal_notifications WHERE goalId = :goalId ORDER BY id DESC")
-    fun getGoalNotificationsByGoalId(goalId: Long): Flow<List<GoalNotificationDetail>>
+    fun getGoalNotificationsByGoalId(goalId: String): Flow<List<GoalNotificationDetail>>
 
     @Query("""
         SELECT gn.* FROM goal_notifications gn
@@ -162,13 +162,13 @@ interface AppNotificationDao {
     // ═══════════════════════════════════════════════════════════════════════════════
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertLoanNotification(detail: LoanNotificationDetail): Long
+    suspend fun insertLoanNotification(detail: LoanNotificationDetail)
 
     @Query("SELECT * FROM loan_notifications WHERE notificationId = :notificationId")
-    suspend fun getLoanNotificationDetail(notificationId: Long): LoanNotificationDetail?
+    suspend fun getLoanNotificationDetail(notificationId: String): LoanNotificationDetail?
 
     @Query("SELECT * FROM loan_notifications WHERE loanId = :loanId ORDER BY id DESC")
-    fun getLoanNotificationsByLoanId(loanId: Long): Flow<List<LoanNotificationDetail>>
+    fun getLoanNotificationsByLoanId(loanId: String): Flow<List<LoanNotificationDetail>>
 
     @Query("""
         SELECT ln.* FROM loan_notifications ln
@@ -183,13 +183,13 @@ interface AppNotificationDao {
     // ═══════════════════════════════════════════════════════════════════════════════
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertExpenseNotification(detail: ExpenseNotificationDetail): Long
+    suspend fun insertExpenseNotification(detail: ExpenseNotificationDetail)
 
     @Query("SELECT * FROM expense_notifications WHERE notificationId = :notificationId")
-    suspend fun getExpenseNotificationDetail(notificationId: Long): ExpenseNotificationDetail?
+    suspend fun getExpenseNotificationDetail(notificationId: String): ExpenseNotificationDetail?
 
     @Query("SELECT * FROM expense_notifications WHERE expenseId = :expenseId ORDER BY id DESC")
-    fun getExpenseNotificationsByExpenseId(expenseId: Long): Flow<List<ExpenseNotificationDetail>>
+    fun getExpenseNotificationsByExpenseId(expenseId: String): Flow<List<ExpenseNotificationDetail>>
 
     @Query("""
         SELECT en.* FROM expense_notifications en
@@ -204,23 +204,23 @@ interface AppNotificationDao {
     // ═══════════════════════════════════════════════════════════════════════════════
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertIncomeNotification(detail: IncomeNotificationDetail): Long
+    suspend fun insertIncomeNotification(detail: IncomeNotificationDetail)
 
     @Query("SELECT * FROM income_notifications WHERE notificationId = :notificationId")
-    suspend fun getIncomeNotificationDetail(notificationId: Long): IncomeNotificationDetail?
+    suspend fun getIncomeNotificationDetail(notificationId: String): IncomeNotificationDetail?
 
     @Query("SELECT * FROM income_notifications WHERE incomeId = :incomeId ORDER BY id DESC")
-    fun getIncomeNotificationsByIncomeId(incomeId: Long): Flow<List<IncomeNotificationDetail>>
+    fun getIncomeNotificationsByIncomeId(incomeId: String): Flow<List<IncomeNotificationDetail>>
 
     // ═══════════════════════════════════════════════════════════════════════════════
     // SECURITY NOTIFICATION QUERIES
     // ═══════════════════════════════════════════════════════════════════════════════
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertSecurityNotification(detail: SecurityNotificationDetail): Long
+    suspend fun insertSecurityNotification(detail: SecurityNotificationDetail)
 
     @Query("SELECT * FROM security_notifications WHERE notificationId = :notificationId")
-    suspend fun getSecurityNotificationDetail(notificationId: Long): SecurityNotificationDetail?
+    suspend fun getSecurityNotificationDetail(notificationId: String): SecurityNotificationDetail?
 
     @Query("""
         SELECT sn.* FROM security_notifications sn
@@ -243,10 +243,10 @@ interface AppNotificationDao {
     // ═══════════════════════════════════════════════════════════════════════════════
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertSystemNotification(detail: SystemNotificationDetail): Long
+    suspend fun insertSystemNotification(detail: SystemNotificationDetail)
 
     @Query("SELECT * FROM system_notifications WHERE notificationId = :notificationId")
-    suspend fun getSystemNotificationDetail(notificationId: Long): SystemNotificationDetail?
+    suspend fun getSystemNotificationDetail(notificationId: String): SystemNotificationDetail?
 
     @Query("""
         SELECT sn.* FROM system_notifications sn
@@ -261,23 +261,23 @@ interface AppNotificationDao {
     // ═══════════════════════════════════════════════════════════════════════════════
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertShoppingNotification(detail: ShoppingNotificationDetail): Long
+    suspend fun insertShoppingNotification(detail: ShoppingNotificationDetail)
 
     @Query("SELECT * FROM shopping_notifications WHERE notificationId = :notificationId")
-    suspend fun getShoppingNotificationDetail(notificationId: Long): ShoppingNotificationDetail?
+    suspend fun getShoppingNotificationDetail(notificationId: String): ShoppingNotificationDetail?
 
     @Query("SELECT * FROM shopping_notifications WHERE listId = :listId ORDER BY id DESC")
-    fun getShoppingNotificationsByListId(listId: Long): Flow<List<ShoppingNotificationDetail>>
+    fun getShoppingNotificationsByListId(listId: String): Flow<List<ShoppingNotificationDetail>>
 
     // ═══════════════════════════════════════════════════════════════════════════════
     // INVESTMENT NOTIFICATION QUERIES
     // ═══════════════════════════════════════════════════════════════════════════════
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertInvestmentNotification(detail: InvestmentNotificationDetail): Long
+    suspend fun insertInvestmentNotification(detail: InvestmentNotificationDetail)
 
     @Query("SELECT * FROM investment_notifications WHERE notificationId = :notificationId")
-    suspend fun getInvestmentNotificationDetail(notificationId: Long): InvestmentNotificationDetail?
+    suspend fun getInvestmentNotificationDetail(notificationId: String): InvestmentNotificationDetail?
 
     @Query("""
         SELECT inv.* FROM investment_notifications inv
@@ -292,10 +292,10 @@ interface AppNotificationDao {
     // ═══════════════════════════════════════════════════════════════════════════════
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertInsightNotification(detail: InsightNotificationDetail): Long
+    suspend fun insertInsightNotification(detail: InsightNotificationDetail)
 
     @Query("SELECT * FROM insight_notifications WHERE notificationId = :notificationId")
-    suspend fun getInsightNotificationDetail(notificationId: Long): InsightNotificationDetail?
+    suspend fun getInsightNotificationDetail(notificationId: String): InsightNotificationDetail?
 
     @Query("""
         SELECT ins.* FROM insight_notifications ins

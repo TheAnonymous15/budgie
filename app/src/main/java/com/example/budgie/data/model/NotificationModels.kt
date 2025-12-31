@@ -189,8 +189,8 @@ enum class InsightNotificationType(val displayName: String) {
 
 @Entity(tableName = "app_notifications")
 data class AppNotification(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
+    @PrimaryKey
+    val id: String = BudgieIdGenerator.generateNotificationId(),
     val category: NotificationCategory,
     val title: String,
     val message: String,
@@ -225,10 +225,10 @@ data class AppNotification(
     indices = [Index("notificationId"), Index("billId")]
 )
 data class BillNotificationDetail(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val notificationId: Long,
-    val billId: Long,
+    @PrimaryKey
+    val id: String = BudgieIdGenerator.generateBillNotificationDetailId(),
+    val notificationId: String, // Now String to match AppNotification.id
+    val billId: String, // Now String to match Bill.id
     val type: BillNotificationType,
     val billName: String,
     val dueDate: Long,
@@ -255,10 +255,10 @@ data class BillNotificationDetail(
     indices = [Index("notificationId"), Index("budgetId")]
 )
 data class BudgetNotificationDetail(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val notificationId: Long,
-    val budgetId: Long,
+    @PrimaryKey
+    val id: String = BudgieIdGenerator.generateBudgetNotificationDetailId(),
+    val notificationId: String, // Now String to match AppNotification.id
+    val budgetId: String, // Now String to match Budget.id
     val type: BudgetNotificationType,
     val categoryName: String,
     val budgetLimit: Double,
@@ -284,10 +284,10 @@ data class BudgetNotificationDetail(
     indices = [Index("notificationId"), Index("goalId")]
 )
 data class GoalNotificationDetail(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val notificationId: Long,
-    val goalId: Long,
+    @PrimaryKey
+    val id: String = BudgieIdGenerator.generateGoalNotificationDetailId(),
+    val notificationId: String, // Now String to match AppNotification.id
+    val goalId: String, // Now String to match FinancialGoal.id
     val type: GoalNotificationType,
     val goalName: String,
     val targetAmount: Double,
@@ -314,10 +314,10 @@ data class GoalNotificationDetail(
     indices = [Index("notificationId"), Index("loanId")]
 )
 data class LoanNotificationDetail(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val notificationId: Long,
-    val loanId: Long,
+    @PrimaryKey
+    val id: String = BudgieIdGenerator.generateLoanNotificationDetailId(),
+    val notificationId: String, // Now String to match AppNotification.id
+    val loanId: String, // Now String to match Loan.id
     val type: LoanNotificationType,
     val loanName: String,
     val lenderName: String? = null,
@@ -346,10 +346,10 @@ data class LoanNotificationDetail(
     indices = [Index("notificationId"), Index("expenseId")]
 )
 data class ExpenseNotificationDetail(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val notificationId: Long,
-    val expenseId: Long? = null,
+    @PrimaryKey
+    val id: String = BudgieIdGenerator.generateExpenseNotificationDetailId(),
+    val notificationId: String, // Now String to match AppNotification.id
+    val expenseId: String? = null, // Now String to match Expense.id
     val type: ExpenseNotificationType,
     val amount: Double,
     val categoryName: String? = null,
@@ -376,10 +376,10 @@ data class ExpenseNotificationDetail(
     indices = [Index("notificationId"), Index("incomeId")]
 )
 data class IncomeNotificationDetail(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val notificationId: Long,
-    val incomeId: Long? = null,
+    @PrimaryKey
+    val id: String = BudgieIdGenerator.generateIncomeNotificationDetailId(),
+    val notificationId: String, // Now String to match AppNotification.id
+    val incomeId: String? = null, // Now String to match Income.id
     val type: IncomeNotificationType,
     val amount: Double? = null,
     val sourceName: String? = null,
@@ -405,9 +405,9 @@ data class IncomeNotificationDetail(
     indices = [Index("notificationId")]
 )
 data class SecurityNotificationDetail(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val notificationId: Long,
+    @PrimaryKey
+    val id: String = BudgieIdGenerator.generateSecurityNotificationDetailId(),
+    val notificationId: String, // Now String to match AppNotification.id
     val type: SecurityNotificationType,
     val deviceInfo: String? = null,
     val ipAddress: String? = null,
@@ -435,9 +435,9 @@ data class SecurityNotificationDetail(
     indices = [Index("notificationId")]
 )
 data class SystemNotificationDetail(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val notificationId: Long,
+    @PrimaryKey
+    val id: String = BudgieIdGenerator.generateSystemNotificationDetailId(),
+    val notificationId: String, // Now String to match AppNotification.id
     val type: SystemNotificationType,
     val version: String? = null,
     val featureName: String? = null,
@@ -463,11 +463,11 @@ data class SystemNotificationDetail(
     indices = [Index("notificationId"), Index("listId")]
 )
 data class ShoppingNotificationDetail(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val notificationId: Long,
-    val listId: Long? = null,
-    val itemId: Long? = null,
+    @PrimaryKey
+    val id: String = BudgieIdGenerator.generateShoppingNotificationDetailId(),
+    val notificationId: String, // Now String to match AppNotification.id
+    val listId: String? = null, // Now String to match ShoppingList.id
+    val itemId: String? = null, // Now String to match ShoppingItem.id
     val type: ShoppingNotificationType,
     val listName: String? = null,
     val itemName: String? = null,
@@ -493,9 +493,9 @@ data class ShoppingNotificationDetail(
     indices = [Index("notificationId")]
 )
 data class InvestmentNotificationDetail(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val notificationId: Long,
+    @PrimaryKey
+    val id: String = BudgieIdGenerator.generateInvestmentNotificationDetailId(),
+    val notificationId: String, // Now String to match AppNotification.id
     val type: InvestmentNotificationType,
     val portfolioValue: Double? = null,
     val changeAmount: Double? = null,
@@ -522,9 +522,9 @@ data class InvestmentNotificationDetail(
     indices = [Index("notificationId")]
 )
 data class InsightNotificationDetail(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val notificationId: Long,
+    @PrimaryKey
+    val id: String = BudgieIdGenerator.generateInsightNotificationDetailId(),
+    val notificationId: String, // Now String to match AppNotification.id
     val type: InsightNotificationType,
     val insightTitle: String,
     val insightDetail: String,

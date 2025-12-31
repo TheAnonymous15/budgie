@@ -51,11 +51,11 @@ interface NotificationDao {
 
     // Get notification by ID
     @Query("SELECT * FROM notifications WHERE id = :id")
-    suspend fun getNotificationById(id: Long): BudgieNotification?
+    suspend fun getNotificationById(id: String): BudgieNotification?
 
     // Insert notification
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertNotification(notification: BudgieNotification): Long
+    suspend fun insertNotification(notification: BudgieNotification)
 
     // Insert multiple notifications
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -67,7 +67,7 @@ interface NotificationDao {
 
     // Mark as read
     @Query("UPDATE notifications SET isRead = 1 WHERE id = :id")
-    suspend fun markAsRead(id: Long)
+    suspend fun markAsRead(id: String)
 
     // Mark all as read
     @Query("UPDATE notifications SET isRead = 1 WHERE isRead = 0")
@@ -75,7 +75,7 @@ interface NotificationDao {
 
     // Archive notification
     @Query("UPDATE notifications SET isArchived = 1 WHERE id = :id")
-    suspend fun archiveNotification(id: Long)
+    suspend fun archiveNotification(id: String)
 
     // Delete notification
     @Delete
@@ -83,7 +83,7 @@ interface NotificationDao {
 
     // Delete by ID
     @Query("DELETE FROM notifications WHERE id = :id")
-    suspend fun deleteById(id: Long)
+    suspend fun deleteById(id: String)
 
     // Delete all read notifications
     @Query("DELETE FROM notifications WHERE isRead = 1")

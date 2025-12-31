@@ -2,31 +2,46 @@ package com.example.budgie.ui.screens
 
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -35,44 +50,161 @@ import com.example.budgie.ui.viewmodel.ModelDownloadViewModel
 import com.example.budgie.ai.DownloadState
 import com.example.budgie.ui.components.*
 import com.example.budgie.ui.viewmodel.MainViewModel
+import com.example.budgie.ui.screens.dashboard.ResponsiveDashboardScreen
 import kotlinx.coroutines.delay
 import java.util.*
+import kotlin.math.PI
+import kotlin.math.cos
+import kotlin.math.sin
 
-// Glassmorphism Colors for Dashboard
-private val GlassWhite = Color.White.copy(alpha = 0.08f)
-private val GlassBorder = Color.White.copy(alpha = 0.12f)
-private val GlassHighlight = Color.White.copy(alpha = 0.15f)
+// ==================== FUTURISTIC COLOR PALETTE ====================
+// Deep Space Navy - Premium dark background
+private val FuturisticNavy = Color(0xFF0A1628)
+private val FuturisticNavyLight = Color(0xFF101D35)
+private val FuturisticNavyDark = Color(0xFF060E1A)
 
-// Glassmorphism Card Modifier
+// Neon Accent Colors
+private val NeonEmerald = Color(0xFF00F5A0)
+private val NeonCyan = Color(0xFF00D4FF)
+private val NeonPurple = Color(0xFFB24BF3)
+private val NeonPink = Color(0xFFFF006E)
+private val NeonBlue = Color(0xFF3B82F6)
+private val NeonGold = Color(0xFFFFD93D)
+private val NeonOrange = Color(0xFFFF8C42)
+
+// Soft & Muted
+private val SoftWhite = Color(0xFFE8F1F2)
+private val MutedGray = Color(0xFF8899AA)
+private val CardGlass = Color(0xFF1A2744)
+
+// Status Colors
+private val StatusGreen = Color(0xFF10B981)
+private val StatusRed = Color(0xFFEF4444)
+private val StatusAmber = Color(0xFFF59E0B)
+
+// ==================== ADVANCED GLASSMORPHISM MODIFIERS ====================
+
+// Premium Glassmorphic Card with animated border
+private fun Modifier.futuristicGlassCard(
+    accentColor: Color = NeonCyan,
+    cornerRadius: Int = 24,
+    glowIntensity: Float = 0.15f
+) = this
+    .shadow(
+        elevation = 20.dp,
+        shape = RoundedCornerShape(cornerRadius.dp),
+        ambientColor = accentColor.copy(alpha = glowIntensity),
+        spotColor = accentColor.copy(alpha = glowIntensity * 0.8f)
+    )
+    .clip(RoundedCornerShape(cornerRadius.dp))
+    .background(
+        brush = Brush.verticalGradient(
+            colors = listOf(
+                CardGlass.copy(alpha = 0.85f),
+                FuturisticNavyLight.copy(alpha = 0.9f),
+                FuturisticNavy.copy(alpha = 0.95f)
+            )
+        )
+    )
+    .border(
+        width = 1.dp,
+        brush = Brush.linearGradient(
+            colors = listOf(
+                accentColor.copy(alpha = 0.5f),
+                accentColor.copy(alpha = 0.15f),
+                Color.White.copy(alpha = 0.08f)
+            )
+        ),
+        shape = RoundedCornerShape(cornerRadius.dp)
+    )
+
+// Glassmorphic accent card for dashboard
 private fun Modifier.glassmorphicAccentCard(
     accentColor: Color,
     cornerRadius: Int = 16
 ) = this
     .shadow(
-        elevation = 6.dp,
+        elevation = 16.dp,
         shape = RoundedCornerShape(cornerRadius.dp),
-        ambientColor = accentColor.copy(alpha = 0.2f),
+        ambientColor = accentColor.copy(alpha = 0.25f),
         spotColor = accentColor.copy(alpha = 0.2f)
     )
     .clip(RoundedCornerShape(cornerRadius.dp))
     .background(
         brush = Brush.verticalGradient(
             colors = listOf(
-                accentColor.copy(alpha = 0.15f),
+                accentColor.copy(alpha = 0.18f),
                 accentColor.copy(alpha = 0.08f),
-                accentColor.copy(alpha = 0.05f)
+                FuturisticNavy.copy(alpha = 0.95f)
             )
         )
     )
     .border(
-        width = 1.dp,
-        brush = Brush.verticalGradient(
+        width = 1.5.dp,
+        brush = Brush.linearGradient(
             colors = listOf(
-                accentColor.copy(alpha = 0.3f),
-                accentColor.copy(alpha = 0.1f)
+                accentColor.copy(alpha = 0.5f),
+                accentColor.copy(alpha = 0.15f),
+                Color.White.copy(alpha = 0.08f)
             )
         ),
         shape = RoundedCornerShape(cornerRadius.dp)
+    )
+
+// Holographic shimmer card
+private fun Modifier.holographicCard(
+    primaryColor: Color,
+    secondaryColor: Color,
+    cornerRadius: Int = 20
+) = this
+    .shadow(
+        elevation = 16.dp,
+        shape = RoundedCornerShape(cornerRadius.dp),
+        ambientColor = primaryColor.copy(alpha = 0.2f)
+    )
+    .clip(RoundedCornerShape(cornerRadius.dp))
+    .background(
+        brush = Brush.linearGradient(
+            colors = listOf(
+                primaryColor.copy(alpha = 0.2f),
+                secondaryColor.copy(alpha = 0.15f),
+                primaryColor.copy(alpha = 0.1f)
+            ),
+            start = Offset.Zero,
+            end = Offset.Infinite
+        )
+    )
+    .border(
+        width = 1.5.dp,
+        brush = Brush.linearGradient(
+            colors = listOf(
+                primaryColor.copy(alpha = 0.6f),
+                secondaryColor.copy(alpha = 0.4f),
+                primaryColor.copy(alpha = 0.3f)
+            )
+        ),
+        shape = RoundedCornerShape(cornerRadius.dp)
+    )
+
+// Neon glow button modifier
+private fun Modifier.neonGlowButton(
+    color: Color,
+    cornerRadius: Int = 16
+) = this
+    .shadow(
+        elevation = 12.dp,
+        shape = RoundedCornerShape(cornerRadius.dp),
+        ambientColor = color.copy(alpha = 0.5f),
+        spotColor = color.copy(alpha = 0.4f)
+    )
+    .clip(RoundedCornerShape(cornerRadius.dp))
+    .background(
+        brush = Brush.horizontalGradient(
+            colors = listOf(
+                color,
+                color.copy(alpha = 0.85f)
+            )
+        )
     )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -104,6 +236,67 @@ fun DashboardScreen(
     onLogout: () -> Unit = {},
     onExit: () -> Unit = {},
     // Model Download ViewModel (injected from navigation)
+    modelDownloadViewModel: ModelDownloadViewModel? = null
+) {
+    // Delegate to the responsive dashboard screen
+    ResponsiveDashboardScreen(
+        viewModel = viewModel,
+        userName = userName,
+        onNavigateToExpenses = onNavigateToExpenses,
+        onNavigateToIncome = onNavigateToIncome,
+        onNavigateToBills = onNavigateToBills,
+        onNavigateToBudget = onNavigateToBudget,
+        onNavigateToInsights = onNavigateToInsights,
+        onNavigateToInvestments = onNavigateToInvestments,
+        onNavigateToWealthProjection = onNavigateToWealthProjection,
+        onNavigateToExport = onNavigateToExport,
+        onNavigateToGoals = onNavigateToGoals,
+        onNavigateToLoans = onNavigateToLoans,
+        onNavigateToShoppingList = onNavigateToShoppingList,
+        onNavigateToAIChat = onNavigateToAIChat,
+        onNavigateToNotifications = onNavigateToNotifications,
+        onAddExpense = onAddExpense,
+        onAddIncome = onAddIncome,
+        onNavigateToProfile = onNavigateToProfile,
+        onNavigateToSettings = onNavigateToSettings,
+        onNavigateToSecurity = onNavigateToSecurity,
+        onNavigateToHelp = onNavigateToHelp,
+        onNavigateToAbout = onNavigateToAbout,
+        onLogout = onLogout,
+        onExit = onExit,
+        modelDownloadViewModel = modelDownloadViewModel
+    )
+}
+
+// ==================== Legacy Dashboard Components (kept for backward compatibility) ====================
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun LegacyDashboardContent(
+    viewModel: MainViewModel,
+    userName: String? = null,
+    onNavigateToExpenses: () -> Unit,
+    onNavigateToIncome: () -> Unit,
+    onNavigateToBills: () -> Unit,
+    onNavigateToBudget: () -> Unit,
+    onNavigateToInsights: () -> Unit,
+    onNavigateToInvestments: () -> Unit,
+    onNavigateToWealthProjection: () -> Unit,
+    onNavigateToExport: () -> Unit,
+    onNavigateToGoals: () -> Unit,
+    onNavigateToLoans: () -> Unit,
+    onNavigateToShoppingList: () -> Unit,
+    onNavigateToAIChat: () -> Unit,
+    onNavigateToNotifications: () -> Unit = {},
+    onAddExpense: () -> Unit,
+    onAddIncome: () -> Unit,
+    onNavigateToProfile: () -> Unit = {},
+    onNavigateToSettings: () -> Unit = {},
+    onNavigateToSecurity: () -> Unit = {},
+    onNavigateToHelp: () -> Unit = {},
+    onNavigateToAbout: () -> Unit = {},
+    onLogout: () -> Unit = {},
+    onExit: () -> Unit = {},
     modelDownloadViewModel: ModelDownloadViewModel? = null
 ) {
     val context = LocalContext.current

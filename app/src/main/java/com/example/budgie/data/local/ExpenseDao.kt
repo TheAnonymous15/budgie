@@ -1,4 +1,4 @@
-package com.example.budgie.data.local
+ package com.example.budgie.data.local
 
 import androidx.room.*
 import com.example.budgie.data.model.Expense
@@ -26,10 +26,10 @@ interface ExpenseDao {
     fun getTotalExpensesByCategoryAndDateRange(category: ExpenseCategory, startDate: Long, endDate: Long): Flow<Double?>
 
     @Query("SELECT * FROM expenses WHERE id = :id")
-    suspend fun getExpenseById(id: Long): Expense?
+    suspend fun getExpenseById(id: String): Expense?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertExpense(expense: Expense): Long
+    suspend fun insertExpense(expense: Expense)
 
     @Update
     suspend fun updateExpense(expense: Expense)
@@ -38,7 +38,7 @@ interface ExpenseDao {
     suspend fun deleteExpense(expense: Expense)
 
     @Query("DELETE FROM expenses WHERE id = :id")
-    suspend fun deleteExpenseById(id: Long)
+    suspend fun deleteExpenseById(id: String)
 
     @Query("DELETE FROM expenses")
     suspend fun deleteAll()

@@ -23,10 +23,10 @@ interface IncomeDao {
     fun getTotalRecurringIncome(): Flow<Double?>
 
     @Query("SELECT * FROM incomes WHERE id = :id")
-    suspend fun getIncomeById(id: Long): Income?
+    suspend fun getIncomeById(id: String): Income?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertIncome(income: Income): Long
+    suspend fun insertIncome(income: Income)
 
     @Update
     suspend fun updateIncome(income: Income)
@@ -35,7 +35,7 @@ interface IncomeDao {
     suspend fun deleteIncome(income: Income)
 
     @Query("DELETE FROM incomes WHERE id = :id")
-    suspend fun deleteIncomeById(id: Long)
+    suspend fun deleteIncomeById(id: String)
 
     @Query("DELETE FROM incomes")
     suspend fun deleteAll()

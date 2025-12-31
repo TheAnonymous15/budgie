@@ -13,7 +13,7 @@ interface ShoppingDao {
     // ==================== Shopping List Operations ====================
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertShoppingList(list: ShoppingList): Long
+    suspend fun insertShoppingList(list: ShoppingList)
 
     @Update
     suspend fun updateShoppingList(list: ShoppingList)
@@ -28,7 +28,7 @@ interface ShoppingDao {
     fun getActiveShoppingLists(): Flow<List<ShoppingList>>
 
     @Query("SELECT * FROM shopping_lists WHERE id = :listId")
-    suspend fun getShoppingListById(listId: Long): ShoppingList?
+    suspend fun getShoppingListById(listId: String): ShoppingList?
 
     @Query("SELECT MAX(listNumber) FROM shopping_lists")
     suspend fun getMaxListNumber(): Int?
@@ -43,18 +43,18 @@ interface ShoppingDao {
 
     @Transaction
     @Query("SELECT * FROM shopping_lists WHERE id = :listId")
-    suspend fun getShoppingListWithItems(listId: Long): ShoppingListWithItems?
+    suspend fun getShoppingListWithItems(listId: String): ShoppingListWithItems?
 
     @Query("UPDATE shopping_lists SET isCompleted = 1, completedAt = :completedAt WHERE id = :listId")
-    suspend fun markListCompleted(listId: Long, completedAt: Long = System.currentTimeMillis())
+    suspend fun markListCompleted(listId: String, completedAt: Long = System.currentTimeMillis())
 
     @Query("UPDATE shopping_lists SET actualTotal = :total WHERE id = :listId")
-    suspend fun updateListTotal(listId: Long, total: Double)
+    suspend fun updateListTotal(listId: String, total: Double)
 
     // ==================== Shopping Item Operations ====================
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertShoppingItem(item: ShoppingItem): Long
+    suspend fun insertShoppingItem(item: ShoppingItem)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertShoppingItems(items: List<ShoppingItem>)
@@ -66,19 +66,19 @@ interface ShoppingDao {
     suspend fun deleteShoppingItem(item: ShoppingItem)
 
     @Query("SELECT * FROM shopping_items WHERE listId = :listId ORDER BY needPriority ASC, name ASC")
-    fun getItemsByListId(listId: Long): Flow<List<ShoppingItem>>
+    fun getItemsByListId(listId: String): Flow<List<ShoppingItem>>
 
     @Query("SELECT * FROM shopping_items WHERE id = :itemId")
-    suspend fun getShoppingItemById(itemId: Long): ShoppingItem?
+    suspend fun getShoppingItemById(itemId: String): ShoppingItem?
 
     @Query("UPDATE shopping_items SET isPurchased = :isPurchased, actualPrice = :actualPrice WHERE id = :itemId")
-    suspend fun markItemPurchased(itemId: Long, isPurchased: Boolean, actualPrice: Double?)
+    suspend fun markItemPurchased(itemId: String, isPurchased: Boolean, actualPrice: Double?)
 
     @Query("UPDATE shopping_items SET aiRecommendation = :recommendation, aiSuggestedQuantity = :suggestedQty, aiReason = :reason WHERE id = :itemId")
-    suspend fun updateItemAIAnalysis(itemId: Long, recommendation: ShoppingRecommendation, suggestedQty: Int?, reason: String?)
+    suspend fun updateItemAIAnalysis(itemId: String, recommendation: ShoppingRecommendation, suggestedQty: Int?, reason: String?)
 
     @Query("DELETE FROM shopping_items WHERE listId = :listId")
-    suspend fun deleteItemsByListId(listId: Long)
+    suspend fun deleteItemsByListId(listId: String)
 
     // ==================== Summary Queries ====================
 

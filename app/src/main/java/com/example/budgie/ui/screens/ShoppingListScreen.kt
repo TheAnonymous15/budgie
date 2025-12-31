@@ -103,13 +103,13 @@ fun ShoppingListScreen(
     onAddItem: (ShoppingItem) -> Unit,
     onUpdateItem: (ShoppingItem) -> Unit,
     onDeleteItem: (ShoppingItem) -> Unit,
-    onAnalyzeList: (Long) -> Unit,
-    onAddToBudget: (Long, Double) -> Unit,
+    onAnalyzeList: (String) -> Unit,
+    onAddToBudget: (String, Double) -> Unit,
     onNavigateBack: () -> Unit
 ) {
-    var selectedListId by remember { mutableStateOf<Long?>(null) }
+    var selectedListId by remember { mutableStateOf<String?>(null) }
     var showCreateDialog by remember { mutableStateOf(false) }
-    var showAddItemDialog by remember { mutableStateOf<Long?>(null) }
+    var showAddItemDialog by remember { mutableStateOf<String?>(null) }
     var showExportDialog by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
@@ -805,7 +805,7 @@ private data class ShoppingItemEntry(
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun AddShoppingItemDialog(
-    listId: Long,
+    listId: String,
     onDismiss: () -> Unit,
     onConfirm: (ShoppingItem) -> Unit
 ) {

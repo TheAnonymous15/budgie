@@ -50,8 +50,8 @@ enum class NotificationPriority(val level: Int) {
  */
 @Entity(tableName = "notifications")
 data class BudgieNotification(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
+    @PrimaryKey
+    val id: String = BudgieIdGenerator.generateNotificationId(),
     val title: String,
     val message: String,
     val type: NotificationType,

@@ -8,8 +8,8 @@ import java.util.Date
  */
 @Entity(tableName = "shopping_lists")
 data class ShoppingList(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
+    @PrimaryKey
+    val id: String = BudgieIdGenerator.generateShoppingListId(),
     val listNumber: Int = 1,
     val title: String = "Shopping List",
     val totalBudget: Double = 0.0,
@@ -36,9 +36,9 @@ data class ShoppingList(
     indices = [Index("listId")]
 )
 data class ShoppingItem(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val listId: Long,
+    @PrimaryKey
+    val id: String = BudgieIdGenerator.generateShoppingItemId(),
+    val listId: String, // Now String to match ShoppingList.id
     val name: String,
     val quantity: Int = 1,
     val unit: String = "pcs", // pcs, kg, liters, etc.

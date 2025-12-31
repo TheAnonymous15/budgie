@@ -32,7 +32,7 @@ class FinanceRepository(
     fun getExpenseSumByCategory(startDate: Long, endDate: Long): Flow<List<CategorySum>> =
         expenseDao.getExpenseSumByCategory(startDate, endDate)
 
-    suspend fun addExpense(expense: Expense): Long = expenseDao.insertExpense(expense)
+    suspend fun addExpense(expense: Expense) = expenseDao.insertExpense(expense)
 
     suspend fun updateExpense(expense: Expense) = expenseDao.updateExpense(expense)
 
@@ -47,7 +47,7 @@ class FinanceRepository(
     fun getTotalRecurringIncome(): Flow<Double> =
         incomeDao.getTotalRecurringIncome().map { it ?: 0.0 }
 
-    suspend fun addIncome(income: Income): Long = incomeDao.insertIncome(income)
+    suspend fun addIncome(income: Income) = incomeDao.insertIncome(income)
 
     suspend fun updateIncome(income: Income) = incomeDao.updateIncome(income)
 
@@ -64,26 +64,26 @@ class FinanceRepository(
 
     fun getTotalUnpaidBills(): Flow<Double> = billDao.getTotalUnpaidBills().map { it ?: 0.0 }
 
-    suspend fun addBill(bill: Bill): Long = billDao.insertBill(bill)
+    suspend fun addBill(bill: Bill) = billDao.insertBill(bill)
 
     suspend fun updateBill(bill: Bill) = billDao.updateBill(bill)
 
     suspend fun deleteBill(bill: Bill) = billDao.deleteBill(bill)
 
-    suspend fun deleteBillById(billId: Long) {
+    suspend fun deleteBillById(billId: String) {
         billDao.getBillById(billId)?.let { billDao.deleteBill(it) }
     }
 
-    suspend fun getBillById(billId: Long): Bill? = billDao.getBillById(billId)
+    suspend fun getBillById(billId: String): Bill? = billDao.getBillById(billId)
 
-    suspend fun markBillAsPaid(billId: Long, isPaid: Boolean) =
+    suspend fun markBillAsPaid(billId: String, isPaid: Boolean) =
         billDao.updateBillPaidStatus(billId, isPaid)
 
     // Budget operations
     fun getBudgetsByMonth(month: Int, year: Int): Flow<List<Budget>> =
         budgetDao.getBudgetsByMonth(month, year)
 
-    suspend fun addBudget(budget: Budget): Long = budgetDao.insertBudget(budget)
+    suspend fun addBudget(budget: Budget) = budgetDao.insertBudget(budget)
 
     suspend fun updateBudget(budget: Budget) = budgetDao.updateBudget(budget)
 

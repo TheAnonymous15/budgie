@@ -10,8 +10,8 @@ import kotlinx.serialization.Serializable
 @Entity(tableName = "loans")
 @Serializable
 data class Loan(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
+    @PrimaryKey
+    val id: String = BudgieIdGenerator.generateLoanId(),
     val title: String,
     val lenderName: String, // Bank, SACCO, Friend, etc.
     val loanType: LoanType,
@@ -26,7 +26,7 @@ data class Loan(
     val nextPaymentDate: Long,
     val paymentFrequency: PaymentFrequency = PaymentFrequency.MONTHLY,
     val status: LoanStatus = LoanStatus.ACTIVE,
-    val linkedGoalId: Long? = null, // If loan is for a goal
+    val linkedGoalId: String? = null, // If loan is for a goal (now String)
     val isGoalLoan: Boolean = false, // Whether this is a loan from goals
     val isLoanActive: Boolean = true, // Whether the goal loan is activated (started)
     val createdAt: Long = System.currentTimeMillis(),
@@ -95,9 +95,9 @@ enum class LoanStatus(val displayName: String) {
 @Entity(tableName = "loan_payments")
 @Serializable
 data class LoanPayment(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
-    val loanId: Long,
+    @PrimaryKey
+    val id: String = BudgieIdGenerator.generateLoanPaymentId(),
+    val loanId: String, // Now String to match Loan.id
     val amount: Double,
     val principalPortion: Double = 0.0, // Portion going to principal
     val interestPortion: Double = 0.0, // Portion going to interest

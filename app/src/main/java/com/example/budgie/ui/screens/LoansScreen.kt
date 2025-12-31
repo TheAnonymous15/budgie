@@ -164,13 +164,13 @@ private fun Modifier.glassmorphicAccentCard(
 @Composable
 fun LoansScreen(
     loans: List<Loan>,
-    loanPayments: Map<Long, List<LoanPayment>>,
+    loanPayments: Map<String, List<LoanPayment>>,
     loanSummary: LoanSummary,
     financialSummary: FinancialSummary = FinancialSummary(),
     onAddLoan: (Loan) -> Unit,
     onUpdateLoan: (Loan) -> Unit,
     onDeleteLoan: (Loan) -> Unit,
-    onAddPayment: (Long, Double, String) -> Unit,
+    onAddPayment: (String, Double, String) -> Unit,
     onNavigateBack: () -> Unit
 ) {
     var selectedTab by remember { mutableIntStateOf(0) }

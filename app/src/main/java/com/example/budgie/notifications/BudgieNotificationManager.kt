@@ -134,7 +134,7 @@ class BudgieNotificationManager private constructor(private val context: Context
         actionData: String? = null,
         expiresInHours: Int? = null,
         showSystemNotification: Boolean = false
-    ): Long {
+    ): String {
         val notification = BudgieNotification(
             title = title,
             message = message,
@@ -147,15 +147,15 @@ class BudgieNotificationManager private constructor(private val context: Context
             }
         )
 
-        val id = notificationDao.insertNotification(notification)
-        Log.d(TAG, "Created notification: $title (ID: $id)")
+        notificationDao.insertNotification(notification)
+        Log.d(TAG, "Created notification: $title (ID: ${notification.id})")
 
         // Optionally show system notification
         if (showSystemNotification) {
-            showSystemNotification(notification.copy(id = id))
+            showSystemNotification(notification)
         }
 
-        return id
+        return notification.id
     }
 
     /**
@@ -433,13 +433,13 @@ class BudgieNotificationManager private constructor(private val context: Context
 
     fun getUnreadCount(): Flow<Int> = notificationDao.getUnreadCount()
 
-    suspend fun markAsRead(id: Long) = notificationDao.markAsRead(id)
+    suspend fun markAsRead(id: String) = notificationDao.markAsRead(id)
 
     suspend fun markAllAsRead() = notificationDao.markAllAsRead()
 
-    suspend fun archiveNotification(id: Long) = notificationDao.archiveNotification(id)
+    suspend fun archiveNotification(id: String) = notificationDao.archiveNotification(id)
 
-    suspend fun deleteNotification(id: Long) = notificationDao.deleteById(id)
+    suspend fun deleteNotification(id: String) = notificationDao.deleteById(id)
 
     suspend fun deleteAllRead() = notificationDao.deleteAllRead()
 
@@ -528,8 +528,9 @@ class BudgieNotificationManager private constructor(private val context: Context
             Log.d(TAG, "In-app notification created with ID: $notificationId")
 
             // Also show system push notification
+            // Use hashCode() to convert String ID to Int for Android notification system
             showPushNotification(
-                id = notificationId.toInt(),
+                id = notificationId.hashCode(),
                 title = title,
                 message = message,
                 channelId = CHANNEL_INSIGHTS
@@ -606,8 +607,9 @@ class BudgieNotificationManager private constructor(private val context: Context
             else -> CHANNEL_GENERAL
         }
 
+        // Use hashCode() to convert String ID to Int for Android notification system
         showPushNotification(
-            id = notificationId.toInt(),
+            id = notificationId.hashCode(),
             title = title,
             message = message,
             channelId = channelId

@@ -59,7 +59,7 @@ import com.example.budgie.data.model.InsightNotificationDetail
         InvestmentNotificationDetail::class,
         InsightNotificationDetail::class
     ],
-    version = 6,
+    version = 7,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

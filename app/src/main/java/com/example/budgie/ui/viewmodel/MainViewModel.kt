@@ -94,8 +94,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
 
     // Loan payments by loan ID
-    private val _loanPayments = MutableStateFlow<Map<Long, List<LoanPayment>>>(emptyMap())
-    val loanPayments: StateFlow<Map<Long, List<LoanPayment>>> = _loanPayments.asStateFlow()
+    private val _loanPayments = MutableStateFlow<Map<String, List<LoanPayment>>>(emptyMap())
+    val loanPayments: StateFlow<Map<String, List<LoanPayment>>> = _loanPayments.asStateFlow()
 
     // Loans summary for dashboard
     val loanSummary: StateFlow<LoanSummary> = combine(
@@ -136,7 +136,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         // Load loan payments
         viewModelScope.launch {
             loans.collect { loanList ->
-                val paymentsMap = mutableMapOf<Long, List<LoanPayment>>()
+                val paymentsMap = mutableMapOf<String, List<LoanPayment>>()
                 loanList.forEach { loan ->
                     loanDao.getPaymentsByLoan(loan.id).collect { payments ->
                         paymentsMap[loan.id] = payments
@@ -309,7 +309,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun markBillAsPaid(billId: Long, isPaid: Boolean) {
+    fun markBillAsPaid(billId: String, isPaid: Boolean) {
         viewModelScope.launch {
             // If marking as paid, create an expense record
             if (isPaid) {
@@ -414,7 +414,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun addGoalContribution(goalId: Long, amount: Double) {
+    fun addGoalContribution(goalId: String, amount: Double) {
         viewModelScope.launch {
             goalDao.addContribution(goalId, amount)
             goalDao.insertContribution(
@@ -432,7 +432,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun getGoalContributions(goalId: Long): Flow<List<GoalContribution>> {
+    fun getGoalContributions(goalId: String): Flow<List<GoalContribution>> {
         return goalDao.getContributionsByGoal(goalId)
     }
 
@@ -458,7 +458,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun addLoanPayment(loanId: Long, amount: Double, reference: String = "") {
+    fun addLoanPayment(loanId: String, amount: Double, reference: String = "") {
         viewModelScope.launch {
             // Get current loan
             loanDao.getLoanById(loanId)?.let { loan ->
@@ -493,7 +493,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun getLoanPayments(loanId: Long): Flow<List<LoanPayment>> {
+    fun getLoanPayments(loanId: String): Flow<List<LoanPayment>> {
         return loanDao.getPaymentsByLoan(loanId)
     }
 
@@ -541,7 +541,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    private suspend fun updateShoppingListTotal(listId: Long) {
+    private suspend fun updateShoppingListTotal(listId: String) {
         val listWithItems = shoppingDao.getShoppingListWithItems(listId)
         listWithItems?.let {
             val total = it.items.sumOf { item -> item.estimatedPrice * item.quantity }
@@ -549,14 +549,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun analyzeShoppingList(listId: Long) {
+    fun analyzeShoppingList(listId: String) {
         viewModelScope.launch {
             // Shopping list analysis will be implemented when AI is ready
             // For now, this is a stub
         }
     }
 
-    fun addShoppingListToBudget(listId: Long, amount: Double) {
+    fun addShoppingListToBudget(listId: String, amount: Double) {
         viewModelScope.launch {
             val list = shoppingDao.getShoppingListById(listId) ?: return@launch
             val calendar = Calendar.getInstance()

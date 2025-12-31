@@ -31,10 +31,10 @@ interface BillDao {
     fun getTotalUnpaidBills(): Flow<Double?>
 
     @Query("SELECT * FROM bills WHERE id = :id")
-    suspend fun getBillById(id: Long): Bill?
+    suspend fun getBillById(id: String): Bill?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertBill(bill: Bill): Long
+    suspend fun insertBill(bill: Bill)
 
     @Update
     suspend fun updateBill(bill: Bill)
@@ -43,7 +43,7 @@ interface BillDao {
     suspend fun deleteBill(bill: Bill)
 
     @Query("UPDATE bills SET isPaid = :isPaid WHERE id = :id")
-    suspend fun updateBillPaidStatus(id: Long, isPaid: Boolean)
+    suspend fun updateBillPaidStatus(id: String, isPaid: Boolean)
 
     @Query("DELETE FROM bills")
     suspend fun deleteAll()

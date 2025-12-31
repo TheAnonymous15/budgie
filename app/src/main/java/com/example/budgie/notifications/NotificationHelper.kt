@@ -217,7 +217,7 @@ object NotificationHelper {
     /**
      * Show smart bill reminder based on payment patterns
      */
-    fun showBillReminder(context: Context, billName: String, amount: Double, daysUntilDue: Int, billId: Long, usualPayDay: Int? = null) {
+    fun showBillReminder(context: Context, billName: String, amount: Double, daysUntilDue: Int, billId: String, usualPayDay: Int? = null) {
         val urgency = when {
             daysUntilDue <= 0 -> "🚨 OVERDUE"
             daysUntilDue == 1 -> "⚠️ Due Tomorrow"
@@ -236,7 +236,7 @@ object NotificationHelper {
         showNotification(
             context = context,
             channelId = CHANNEL_BILLS,
-            notificationId = NOTIFICATION_BILL_REMINDER + billId.toInt(),
+            notificationId = NOTIFICATION_BILL_REMINDER + billId.hashCode(),
             title = "$urgency: $billName",
             message = message,
             icon = R.drawable.ic_launcher_foreground,

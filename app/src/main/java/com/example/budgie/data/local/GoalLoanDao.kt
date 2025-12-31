@@ -20,13 +20,13 @@ interface GoalDao {
     fun getGoalsByType(type: GoalType): Flow<List<FinancialGoal>>
 
     @Query("SELECT * FROM goals WHERE id = :goalId")
-    suspend fun getGoalById(goalId: Long): FinancialGoal?
+    suspend fun getGoalById(goalId: String): FinancialGoal?
 
     @Query("SELECT * FROM goals WHERE id = :goalId")
-    fun getGoalByIdFlow(goalId: Long): Flow<FinancialGoal?>
+    fun getGoalByIdFlow(goalId: String): Flow<FinancialGoal?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertGoal(goal: FinancialGoal): Long
+    suspend fun insertGoal(goal: FinancialGoal)
 
     @Update
     suspend fun updateGoal(goal: FinancialGoal)
@@ -35,23 +35,23 @@ interface GoalDao {
     suspend fun deleteGoal(goal: FinancialGoal)
 
     @Query("UPDATE goals SET currentAmount = currentAmount + :amount WHERE id = :goalId")
-    suspend fun addContribution(goalId: Long, amount: Double)
+    suspend fun addContribution(goalId: String, amount: Double)
 
     @Query("UPDATE goals SET isCompleted = 1, completedAt = :completedAt WHERE id = :goalId")
-    suspend fun markGoalCompleted(goalId: Long, completedAt: Long = System.currentTimeMillis())
+    suspend fun markGoalCompleted(goalId: String, completedAt: Long = System.currentTimeMillis())
 
     // Goal Contributions
     @Query("SELECT * FROM goal_contributions WHERE goalId = :goalId ORDER BY date DESC")
-    fun getContributionsByGoal(goalId: Long): Flow<List<GoalContribution>>
+    fun getContributionsByGoal(goalId: String): Flow<List<GoalContribution>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertContribution(contribution: GoalContribution): Long
+    suspend fun insertContribution(contribution: GoalContribution)
 
     @Delete
     suspend fun deleteContribution(contribution: GoalContribution)
 
     @Query("SELECT SUM(amount) FROM goal_contributions WHERE goalId = :goalId")
-    suspend fun getTotalContributions(goalId: Long): Double?
+    suspend fun getTotalContributions(goalId: String): Double?
 
     // Summary queries
     @Query("SELECT COUNT(*) FROM goals WHERE isCompleted = 0")
@@ -83,13 +83,13 @@ interface LoanDao {
     fun getActiveLoans(): Flow<List<Loan>>
 
     @Query("SELECT * FROM loans WHERE id = :loanId")
-    suspend fun getLoanById(loanId: Long): Loan?
+    suspend fun getLoanById(loanId: String): Loan?
 
     @Query("SELECT * FROM loans WHERE id = :loanId")
-    fun getLoanByIdFlow(loanId: Long): Flow<Loan?>
+    fun getLoanByIdFlow(loanId: String): Flow<Loan?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertLoan(loan: Loan): Long
+    suspend fun insertLoan(loan: Loan)
 
     @Update
     suspend fun updateLoan(loan: Loan)
@@ -98,23 +98,23 @@ interface LoanDao {
     suspend fun deleteLoan(loan: Loan)
 
     @Query("UPDATE loans SET amountPaid = amountPaid + :amount WHERE id = :loanId")
-    suspend fun addPayment(loanId: Long, amount: Double)
+    suspend fun addPayment(loanId: String, amount: Double)
 
     @Query("UPDATE loans SET status = :status WHERE id = :loanId")
-    suspend fun updateLoanStatus(loanId: Long, status: LoanStatus)
+    suspend fun updateLoanStatus(loanId: String, status: LoanStatus)
 
     @Query("UPDATE loans SET nextPaymentDate = :nextDate WHERE id = :loanId")
-    suspend fun updateNextPaymentDate(loanId: Long, nextDate: Long)
+    suspend fun updateNextPaymentDate(loanId: String, nextDate: Long)
 
     // Loan Payments
     @Query("SELECT * FROM loan_payments WHERE loanId = :loanId ORDER BY paymentDate DESC")
-    fun getPaymentsByLoan(loanId: Long): Flow<List<LoanPayment>>
+    fun getPaymentsByLoan(loanId: String): Flow<List<LoanPayment>>
 
     @Query("SELECT * FROM loan_payments ORDER BY paymentDate DESC")
     fun getAllPayments(): Flow<List<LoanPayment>>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertPayment(payment: LoanPayment): Long
+    suspend fun insertPayment(payment: LoanPayment)
 
     @Delete
     suspend fun deletePayment(payment: LoanPayment)

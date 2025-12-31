@@ -6,8 +6,8 @@ import java.util.Date
 
 @Entity(tableName = "utility_readings")
 data class UtilityReading(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
+    @PrimaryKey
+    val id: String = BudgieIdGenerator.generateUtilityReadingId(),
     val utilityName: String,  // e.g., "Electricity", "Water", "Gas"
     val reading: Double,
     val costPerUnit: Double,

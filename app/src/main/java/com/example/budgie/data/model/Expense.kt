@@ -5,8 +5,8 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "expenses")
 data class Expense(
-    @PrimaryKey(autoGenerate = true)
-    val id: Long = 0,
+    @PrimaryKey
+    val id: String = BudgieIdGenerator.generateExpenseId(),
     val title: String,
     val amount: Double,
     val category: ExpenseCategory,

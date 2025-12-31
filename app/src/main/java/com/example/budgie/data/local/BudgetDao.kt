@@ -20,7 +20,7 @@ interface BudgetDao {
     fun getTotalBudgetForMonth(month: Int, year: Int): Flow<Double?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertBudget(budget: Budget): Long
+    suspend fun insertBudget(budget: Budget)
 
     @Update
     suspend fun updateBudget(budget: Budget)

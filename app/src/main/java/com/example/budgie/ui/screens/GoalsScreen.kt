@@ -145,7 +145,7 @@ fun GoalsScreen(
     onAddGoal: (FinancialGoal) -> Unit,
     onUpdateGoal: (FinancialGoal) -> Unit,
     onDeleteGoal: (FinancialGoal) -> Unit,
-    onAddContribution: (Long, Double) -> Unit,
+    onAddContribution: (String, Double) -> Unit,
     onStartSaving: (FinancialGoal) -> Unit = {}, // Start saving for future goals
     onAddGoalLoan: (Loan) -> Unit = {}, // Add goal-linked loan
     onNavigateToLoans: ((loanAmount: Double, interestRate: Double, termMonths: Int, interestType: String) -> Unit)? = null,
