@@ -839,7 +839,8 @@ private data class BillEntry(
     val dueDate: Long = System.currentTimeMillis() + (7 * 24 * 60 * 60 * 1000),
     val isRecurring: Boolean = false,
     val categoryExpanded: Boolean = false,
-    val showDatePicker: Boolean = false
+    val showDatePicker: Boolean = false,
+    val isVariableBill: Boolean = false // For variable utility bills
 )
 
 // Glassmorphism for bill screen
@@ -867,6 +868,9 @@ fun AddBillScreen(
     // Date picker state for individual bills
     var showDatePickerFor by remember { mutableStateOf<Int?>(null) }
     val datePickerState = rememberDatePickerState()
+
+    // Variable bill calculator state
+    var showUtilityCalculator by remember { mutableStateOf<Int?>(null) }
 
     // Auto-add new row when last row is filled
     LaunchedEffect(billEntries) {
@@ -1333,6 +1337,100 @@ fun AddBillScreen(
 
                             Spacer(modifier = Modifier.height(12.dp))
 
+                            // Variable Bill Toggle - for utilities like power, water
+                            Card(
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(10.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (entry.isVariableBill) WealthTheme.Cyan.copy(alpha = 0.1f)
+                                                    else WealthTheme.SoftWhite.copy(alpha = 0.03f)
+                                ),
+                                border = if (entry.isVariableBill) BorderStroke(1.dp, WealthTheme.Cyan.copy(alpha = 0.3f)) else null
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable {
+                                            val newChecked = !entry.isVariableBill
+                                            billEntries = billEntries.toMutableList().also {
+                                                it[index] = entry.copy(isVariableBill = newChecked)
+                                            }
+                                            if (newChecked && entry.title.isNotBlank()) {
+                                                showUtilityCalculator = index
+                                            }
+                                        }
+                                        .padding(12.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Calculate,
+                                            null,
+                                            tint = if (entry.isVariableBill) WealthTheme.Cyan else WealthTheme.SoftWhite.copy(alpha = 0.5f),
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                        Column {
+                                            Text(
+                                                "Variable Bill",
+                                                fontSize = 13.sp,
+                                                fontWeight = FontWeight.Medium,
+                                                color = if (entry.isVariableBill) WealthTheme.Cyan else WealthTheme.SoftWhite.copy(alpha = 0.7f)
+                                            )
+                                            Text(
+                                                "Calculate from meter readings",
+                                                fontSize = 11.sp,
+                                                color = WealthTheme.SoftWhite.copy(alpha = 0.4f)
+                                            )
+                                        }
+                                    }
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                    ) {
+                                        if (entry.isVariableBill && entry.title.isNotBlank()) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .clip(RoundedCornerShape(8.dp))
+                                                    .background(WealthTheme.Cyan.copy(alpha = 0.2f))
+                                                    .clickable { showUtilityCalculator = index }
+                                                    .padding(horizontal = 10.dp, vertical = 6.dp)
+                                            ) {
+                                                Text(
+                                                    "Calculate",
+                                                    fontSize = 11.sp,
+                                                    fontWeight = FontWeight.Medium,
+                                                    color = WealthTheme.Cyan
+                                                )
+                                            }
+                                        }
+                                        Switch(
+                                            checked = entry.isVariableBill,
+                                            onCheckedChange = { checked ->
+                                                billEntries = billEntries.toMutableList().also {
+                                                    it[index] = entry.copy(isVariableBill = checked)
+                                                }
+                                                if (checked && entry.title.isNotBlank()) {
+                                                    showUtilityCalculator = index
+                                                }
+                                            },
+                                            colors = SwitchDefaults.colors(
+                                                checkedThumbColor = WealthTheme.Cyan,
+                                                checkedTrackColor = WealthTheme.Cyan.copy(alpha = 0.3f),
+                                                uncheckedThumbColor = WealthTheme.SoftWhite.copy(alpha = 0.5f),
+                                                uncheckedTrackColor = WealthTheme.SoftWhite.copy(alpha = 0.1f)
+                                            ),
+                                            modifier = Modifier.scale(0.8f)
+                                        )
+                                    }
+                                }
+                            }
+
+                            Spacer(modifier = Modifier.height(12.dp))
+
                             // Amount field
                             OutlinedTextField(
                                 value = entry.amount,
@@ -1467,6 +1565,31 @@ fun AddBillScreen(
                     )
                 }
             }
+        }
+    }
+
+    // Variable Bill Calculator Dialog
+    showUtilityCalculator?.let { entryIndex ->
+        val entry = billEntries.getOrNull(entryIndex)
+        if (entry != null) {
+            UtilityCalculatorDialog(
+                utilityName = entry.title.ifBlank { "Utility Bill" },
+                viewModel = viewModel,
+                onDismiss = { showUtilityCalculator = null },
+                onCalculate = { calculatedAmount, currentReading, costPerUnit ->
+                    billEntries = billEntries.toMutableList().also {
+                        it[entryIndex] = entry.copy(amount = String.format("%.2f", calculatedAmount))
+                    }
+                    // Save the current reading for future reference
+                    viewModel.saveUtilityReading(
+                        utilityName = entry.title,
+                        reading = currentReading,
+                        costPerUnit = costPerUnit,
+                        notes = "Reading saved from bill entry"
+                    )
+                    showUtilityCalculator = null
+                }
+            )
         }
     }
 }

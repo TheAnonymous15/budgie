@@ -115,6 +115,8 @@ data class GoalContribution(
  */
 data class GoalsSummary(
     val activeGoals: Int = 0,
+    val completedGoals: Int = 0,
+    val totalGoals: Int = 0,
     val totalTargetAmount: Double = 0.0,
     val totalCurrentAmount: Double = 0.0,
     val overallProgress: Double = 0.0

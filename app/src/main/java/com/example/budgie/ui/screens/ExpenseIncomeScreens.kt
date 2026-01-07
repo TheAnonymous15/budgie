@@ -359,8 +359,7 @@ private data class ExpenseEntry(
     val amount: String = "",
     val category: ExpenseCategory = ExpenseCategory.OTHER,
     val notes: String = "",
-    val categoryExpanded: Boolean = false,
-    val isUtilityExpense: Boolean = false
+    val categoryExpanded: Boolean = false
 )
 
 // Glassmorphism for expense screen
@@ -385,8 +384,6 @@ fun AddExpenseScreen(
         mutableStateOf(listOf(ExpenseEntry(id = 1)))
     }
 
-    // Utility calculator states
-    var showUtilityCalculator by remember { mutableStateOf<Int?>(null) }
 
     // Auto-add new row when last row is filled
     LaunchedEffect(expenseEntries) {
@@ -949,128 +946,6 @@ fun AddExpenseScreen(
                                 }
                             }
 
-                            Spacer(modifier = Modifier.height(14.dp))
-
-                            // Variable Utility Toggle - Premium Card
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(14.dp))
-                                    .background(
-                                        if (entry.isUtilityExpense)
-                                            Brush.horizontalGradient(
-                                                colors = listOf(
-                                                    WealthTheme.Amber.copy(alpha = 0.15f),
-                                                    WealthTheme.Amber.copy(alpha = 0.08f)
-                                                )
-                                            )
-                                        else
-                                            Brush.horizontalGradient(
-                                                colors = listOf(
-                                                    Color.White.copy(alpha = 0.05f),
-                                                    Color.White.copy(alpha = 0.02f)
-                                                )
-                                            )
-                                    )
-                                    .border(
-                                        1.dp,
-                                        if (entry.isUtilityExpense) WealthTheme.Amber.copy(alpha = 0.3f)
-                                        else WealthTheme.SoftWhite.copy(alpha = 0.1f),
-                                        RoundedCornerShape(14.dp)
-                                    )
-                                    .clickable {
-                                        val newChecked = !entry.isUtilityExpense
-                                        expenseEntries = expenseEntries.toMutableList().also {
-                                            it[index] = entry.copy(isUtilityExpense = newChecked)
-                                        }
-                                        if (newChecked && entry.title.isNotBlank()) {
-                                            showUtilityCalculator = index
-                                        }
-                                    }
-                            ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(14.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                                    ) {
-                                        Box(
-                                            modifier = Modifier
-                                                .size(36.dp)
-                                                .clip(RoundedCornerShape(10.dp))
-                                                .background(
-                                                    if (entry.isUtilityExpense) WealthTheme.Amber.copy(alpha = 0.2f)
-                                                    else WealthTheme.SoftWhite.copy(alpha = 0.08f)
-                                                ),
-                                            contentAlignment = Alignment.Center
-                                        ) {
-                                            Icon(
-                                                Icons.Default.Calculate,
-                                                null,
-                                                tint = if (entry.isUtilityExpense) WealthTheme.Amber else WealthTheme.SoftWhite.copy(alpha = 0.5f),
-                                                modifier = Modifier.size(20.dp)
-                                            )
-                                        }
-                                        Column {
-                                            Text(
-                                                "Variable Utility",
-                                                fontSize = 14.sp,
-                                                fontWeight = FontWeight.SemiBold,
-                                                color = if (entry.isUtilityExpense) WealthTheme.Amber else WealthTheme.SoftWhite.copy(alpha = 0.7f)
-                                            )
-                                            Text(
-                                                "Calculate from meter readings",
-                                                fontSize = 11.sp,
-                                                color = WealthTheme.SoftWhite.copy(alpha = 0.4f)
-                                            )
-                                        }
-                                    }
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                    ) {
-                                        if (entry.isUtilityExpense && entry.title.isNotBlank()) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .clip(RoundedCornerShape(8.dp))
-                                                    .background(WealthTheme.Amber.copy(alpha = 0.2f))
-                                                    .clickable { showUtilityCalculator = index }
-                                                    .padding(horizontal = 10.dp, vertical = 6.dp)
-                                            ) {
-                                                Text(
-                                                    "Calculate",
-                                                    fontSize = 11.sp,
-                                                    fontWeight = FontWeight.Medium,
-                                                    color = WealthTheme.Amber
-                                                )
-                                            }
-                                        }
-                                        Switch(
-                                            checked = entry.isUtilityExpense,
-                                            onCheckedChange = { checked ->
-                                                expenseEntries = expenseEntries.toMutableList().also {
-                                                    it[index] = entry.copy(isUtilityExpense = checked)
-                                                }
-                                                if (checked && entry.title.isNotBlank()) {
-                                                    showUtilityCalculator = index
-                                                }
-                                            },
-                                            colors = SwitchDefaults.colors(
-                                                checkedThumbColor = WealthTheme.Amber,
-                                                checkedTrackColor = WealthTheme.Amber.copy(alpha = 0.3f),
-                                                uncheckedThumbColor = WealthTheme.SoftWhite.copy(alpha = 0.5f),
-                                                uncheckedTrackColor = WealthTheme.SoftWhite.copy(alpha = 0.1f)
-                                            ),
-                                            modifier = Modifier.scale(0.85f)
-                                        )
-                                    }
-                                }
-                            }
 
                             Spacer(modifier = Modifier.height(14.dp))
 
@@ -1265,31 +1140,6 @@ fun AddExpenseScreen(
                     )
                 }
             }
-        }
-    }
-
-    // Utility Calculator Dialog
-    showUtilityCalculator?.let { entryIndex ->
-        val entry = expenseEntries.getOrNull(entryIndex)
-        if (entry != null) {
-            UtilityCalculatorDialog(
-                utilityName = entry.title.ifBlank { "Utility" },
-                viewModel = viewModel,
-                onDismiss = { showUtilityCalculator = null },
-                onCalculate = { calculatedAmount, currentReading, costPerUnit ->
-                    expenseEntries = expenseEntries.toMutableList().also {
-                        it[entryIndex] = entry.copy(amount = String.format("%.2f", calculatedAmount))
-                    }
-                    // Save the current reading for future reference
-                    viewModel.saveUtilityReading(
-                        utilityName = entry.title,
-                        reading = currentReading,
-                        costPerUnit = costPerUnit,
-                        notes = "Reading saved on expense entry"
-                    )
-                    showUtilityCalculator = null
-                }
-            )
         }
     }
 }
