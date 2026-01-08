@@ -24,7 +24,6 @@ class SecurityManager(context: Context) {
         private const val KEY_SECURITY_TYPE = "security_type"
         private const val KEY_PIN_HASH = "pin_hash"
         private const val KEY_IS_AUTHENTICATED = "is_authenticated"
-        private const val KEY_AUTO_LOCK_ENABLED = "auto_lock_enabled"
 
         const val SECURITY_NONE = "none"
         const val SECURITY_PIN = "pin"
@@ -41,14 +40,6 @@ class SecurityManager(context: Context) {
         return encryptedPrefs.getString(KEY_SECURITY_TYPE, SECURITY_NONE) ?: SECURITY_NONE
     }
 
-    // Auto-lock settings
-    fun isAutoLockEnabled(): Boolean {
-        return encryptedPrefs.getBoolean(KEY_AUTO_LOCK_ENABLED, true)
-    }
-
-    fun setAutoLockEnabled(enabled: Boolean) {
-        encryptedPrefs.edit().putBoolean(KEY_AUTO_LOCK_ENABLED, enabled).apply()
-    }
 
     // Save PIN (hashed)
     fun savePin(pin: String) {

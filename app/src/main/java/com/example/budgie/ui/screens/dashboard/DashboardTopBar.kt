@@ -110,30 +110,6 @@ fun ResponsiveDashboardTopBar(
             }
         },
         actions = {
-            IconButton(onClick = onNavigateToNotifications) {
-                BadgedBox(
-                    badge = {
-                        if (unreadNotificationCount > 0) {
-                            Badge(
-                                containerColor = DashboardMutedRed,
-                                contentColor = Color.White
-                            ) {
-                                Text(
-                                    if (unreadNotificationCount > 99) "99+"
-                                    else unreadNotificationCount.toString(),
-                                    fontSize = dimens.notificationBadgeSize.sp
-                                )
-                            }
-                        }
-                    }
-                ) {
-                    Icon(
-                        Icons.Default.Notifications,
-                        "Notifications",
-                        tint = DashboardSoftWhite
-                    )
-                }
-            }
 
             Box {
                 IconButton(onClick = { onShowMenuChange(true) }) {
@@ -159,17 +135,6 @@ fun ResponsiveDashboardTopBar(
                         }
                     )
 
-                    // Settings
-                    ResponsiveMenuItem(
-                        dimens = dimens,
-                        icon = Icons.Default.Settings,
-                        iconTint = DashboardSoftWhite.copy(alpha = 0.7f),
-                        text = "Settings",
-                        onClick = {
-                            onShowMenuChange(false)
-                            onNavigateToSettings()
-                        }
-                    )
 
                     // Security
                     ResponsiveMenuItem(

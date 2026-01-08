@@ -1,6 +1,7 @@
 package com.example.budgie
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -44,6 +45,7 @@ class MainActivity : FragmentActivity() {
 
         securityManager = SecurityManager(this)
 
+
         // Initialize notification channels safely - defer to avoid blocking startup
         window.decorView.post {
             try {
@@ -56,6 +58,7 @@ class MainActivity : FragmentActivity() {
 
         enableEdgeToEdge()
         setContent {
+
             BudgieTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),

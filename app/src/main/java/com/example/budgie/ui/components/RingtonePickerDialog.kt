@@ -66,203 +66,194 @@ fun RingtonePickerDialog(
         }
     }
 
-    AlertDialog(
-        onDismissRequest = {
-            currentlyPlayingRingtone?.stop()
-            onDismiss()
-        },
-        containerColor = Color.Transparent,
-        properties = androidx.compose.ui.window.DialogProperties(
-            usePlatformDefaultWidth = false
-        ),
-        text = {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth(0.95f)
-                    .heightIn(max = 550.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = RingtoneNavy
-                ),
-                shape = RoundedCornerShape(24.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 16.dp)
+    FixedSizeDialog(onDismissRequest = {
+        currentlyPlayingRingtone?.stop()
+        onDismiss()
+    }, properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth(0.95f)
+                .heightIn(max = 550.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = RingtoneNavy
+            ),
+            shape = RoundedCornerShape(24.dp),
+            elevation = CardDefaults.cardElevation(defaultElevation = 16.dp)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Column(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    // Header
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(
-                                Brush.linearGradient(
-                                    colors = listOf(
-                                        RingtoneEmerald.copy(alpha = 0.3f),
-                                        RingtoneNavyLight
-                                    )
+                // Header
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(
+                            Brush.linearGradient(
+                                colors = listOf(
+                                    RingtoneEmerald.copy(alpha = 0.3f),
+                                    RingtoneNavyLight
                                 )
                             )
-                            .padding(20.dp)
+                        )
+                        .padding(20.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(12.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(44.dp)
-                                        .clip(CircleShape)
-                                        .background(RingtoneEmerald.copy(alpha = 0.2f)),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        Icons.Default.MusicNote,
-                                        contentDescription = null,
-                                        tint = RingtoneEmerald,
-                                        modifier = Modifier.size(24.dp)
-                                    )
-                                }
-                                Column {
-                                    Text(
-                                        "Select Notification Sound",
-                                        color = RingtoneSoftWhite,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 18.sp
-                                    )
-                                    Text(
-                                        "Choose a sound for all Budgie notifications",
-                                        color = RingtoneSoftWhite.copy(alpha = 0.6f),
-                                        fontSize = 12.sp
-                                    )
-                                }
-                            }
-
-                            IconButton(
-                                onClick = {
-                                    currentlyPlayingRingtone?.stop()
-                                    onDismiss()
-                                },
+                            Box(
                                 modifier = Modifier
-                                    .size(32.dp)
+                                    .size(44.dp)
                                     .clip(CircleShape)
-                                    .background(RingtoneSoftWhite.copy(alpha = 0.1f))
+                                    .background(RingtoneEmerald.copy(alpha = 0.2f)),
+                                contentAlignment = Alignment.Center
                             ) {
                                 Icon(
-                                    Icons.Default.Close,
-                                    contentDescription = "Close",
-                                    tint = RingtoneSoftWhite,
-                                    modifier = Modifier.size(18.dp)
+                                    Icons.Default.MusicNote,
+                                    contentDescription = null,
+                                    tint = RingtoneEmerald,
+                                    modifier = Modifier.size(24.dp)
+                                )
+                            }
+                            Column {
+                                Text(
+                                    "Select Notification Sound",
+                                    color = RingtoneSoftWhite,
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 18.sp
+                                )
+                                Text(
+                                    "Choose a sound for all Budgie notifications",
+                                    color = RingtoneSoftWhite.copy(alpha = 0.6f),
+                                    fontSize = 12.sp
                                 )
                             }
                         }
-                    }
 
-                    // Content
-                    if (isLoading) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(300.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(color = RingtoneEmerald)
-                        }
-                    } else {
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f),
-                            contentPadding = PaddingValues(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            items(ringtones) { ringtone ->
-                                RingtoneItemRow(
-                                    ringtone = ringtone,
-                                    isSelected = selectedUri == ringtone.uri ||
-                                                (selectedUri == null && ringtone.uri == null),
-                                    onSelect = {
-                                        // Stop previous playing
-                                        currentlyPlayingRingtone?.stop()
-
-                                        selectedUri = ringtone.uri
-
-                                        // Play preview
-                                        if (ringtone.uri != null) {
-                                            try {
-                                                val newRingtone = RingtoneManager.getRingtone(context, ringtone.uri)
-                                                newRingtone?.play()
-                                                currentlyPlayingRingtone = newRingtone
-                                            } catch (e: Exception) {
-                                                // Ignore playback errors
-                                            }
-                                        }
-                                    }
-                                )
-                            }
-                        }
-                    }
-
-                    // Footer with buttons
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(RingtoneNavyLight)
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        OutlinedButton(
+                        IconButton(
                             onClick = {
                                 currentlyPlayingRingtone?.stop()
                                 onDismiss()
                             },
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = RingtoneSoftWhite
-                            ),
-                            border = ButtonDefaults.outlinedButtonBorder.copy(
-                                brush = Brush.linearGradient(
-                                    colors = listOf(
-                                        RingtoneSoftWhite.copy(alpha = 0.3f),
-                                        RingtoneSoftWhite.copy(alpha = 0.3f)
-                                    )
-                                )
-                            ),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Text("Cancel")
-                        }
-
-                        Button(
-                            onClick = {
-                                currentlyPlayingRingtone?.stop()
-                                onRingtoneSelected(selectedUri)
-                                onDismiss()
-                            },
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = RingtoneEmerald
-                            ),
-                            shape = RoundedCornerShape(12.dp)
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(CircleShape)
+                                .background(RingtoneSoftWhite.copy(alpha = 0.1f))
                         ) {
                             Icon(
-                                Icons.Default.Check,
-                                contentDescription = null,
+                                Icons.Default.Close,
+                                contentDescription = "Close",
+                                tint = RingtoneSoftWhite,
                                 modifier = Modifier.size(18.dp)
                             )
-                            Spacer(Modifier.width(8.dp))
-                            Text("Select", fontWeight = FontWeight.SemiBold)
                         }
                     }
                 }
+
+                // Content
+                if (isLoading) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(300.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator(color = RingtoneEmerald)
+                    }
+                } else {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f),
+                        contentPadding = PaddingValues(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(ringtones) { ringtone ->
+                            RingtoneItemRow(
+                                ringtone = ringtone,
+                                isSelected = selectedUri == ringtone.uri ||
+                                            (selectedUri == null && ringtone.uri == null),
+                                onSelect = {
+                                    // Stop previous playing
+                                    currentlyPlayingRingtone?.stop()
+
+                                    selectedUri = ringtone.uri
+
+                                    // Play preview
+                                    if (ringtone.uri != null) {
+                                        try {
+                                            val newRingtone = RingtoneManager.getRingtone(context, ringtone.uri)
+                                            newRingtone?.play()
+                                            currentlyPlayingRingtone = newRingtone
+                                        } catch (e: Exception) {
+                                            // Ignore playback errors
+                                        }
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+
+                // Footer with buttons
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(RingtoneNavyLight)
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = {
+                            currentlyPlayingRingtone?.stop()
+                            onDismiss()
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = RingtoneSoftWhite
+                        ),
+                        border = ButtonDefaults.outlinedButtonBorder.copy(
+                            brush = Brush.linearGradient(
+                                colors = listOf(
+                                    RingtoneSoftWhite.copy(alpha = 0.3f),
+                                    RingtoneSoftWhite.copy(alpha = 0.3f)
+                                )
+                            )
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Text("Cancel")
+                    }
+
+                    Button(
+                        onClick = {
+                            currentlyPlayingRingtone?.stop()
+                            onRingtoneSelected(selectedUri)
+                            onDismiss()
+                        },
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = RingtoneEmerald
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Check,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text("Select", fontWeight = FontWeight.SemiBold)
+                    }
+                }
             }
-        },
-        confirmButton = {},
-        dismissButton = {}
-    )
+        }
+    }
 }
 
 @Composable
@@ -407,4 +398,3 @@ private fun loadSystemRingtones(context: Context): List<RingtoneItem> {
 
     return ringtones
 }
-

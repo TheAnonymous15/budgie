@@ -8,10 +8,12 @@ import com.example.budgie.data.local.BudgieDatabase
 import com.example.budgie.data.model.*
 import com.example.budgie.data.model.RiskLevel as ModelRiskLevel
 import com.example.budgie.data.repository.FinanceRepository
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.*
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val database = BudgieDatabase.getDatabase(application)
     private val repository = FinanceRepository(

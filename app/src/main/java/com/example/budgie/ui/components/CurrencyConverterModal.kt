@@ -125,14 +125,11 @@ fun CurrencyConverterModal(
         }
     }
 
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(
-            usePlatformDefaultWidth = false,
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true
-        )
-    ) {
+    FixedSizeDialog(onDismissRequest = onDismiss, properties = DialogProperties(
+        usePlatformDefaultWidth = false,
+        dismissOnBackPress = true,
+        dismissOnClickOutside = true
+    )) {
         Card(
             modifier = Modifier
                 .fillMaxWidth(0.95f)
@@ -481,43 +478,43 @@ fun CurrencyConverterModal(
                 }
             }
         }
+    }
 
-        // Currency Picker Dialogs
-        if (showFromPicker) {
-            CurrencyPickerDialog(
-                currencies = allCurrencies,
-                selectedCurrency = fromCurrency,
-                searchQuery = searchQuery,
-                onSearchChange = { searchQuery = it },
-                onCurrencySelect = {
-                    fromCurrency = it
-                    showFromPicker = false
-                    searchQuery = ""
-                },
-                onDismiss = {
-                    showFromPicker = false
-                    searchQuery = ""
-                }
-            )
-        }
+    // Currency Picker Dialogs
+    if (showFromPicker) {
+        CurrencyPickerDialog(
+            currencies = allCurrencies,
+            selectedCurrency = fromCurrency,
+            searchQuery = searchQuery,
+            onSearchChange = { searchQuery = it },
+            onCurrencySelect = {
+                fromCurrency = it
+                showFromPicker = false
+                searchQuery = ""
+            },
+            onDismiss = {
+                showFromPicker = false
+                searchQuery = ""
+            }
+        )
+    }
 
-        if (showToPicker) {
-            CurrencyPickerDialog(
-                currencies = allCurrencies,
-                selectedCurrency = toCurrency,
-                searchQuery = searchQuery,
-                onSearchChange = { searchQuery = it },
-                onCurrencySelect = {
-                    toCurrency = it
-                    showToPicker = false
-                    searchQuery = ""
-                },
-                onDismiss = {
-                    showToPicker = false
-                    searchQuery = ""
-                }
-            )
-        }
+    if (showToPicker) {
+        CurrencyPickerDialog(
+            currencies = allCurrencies,
+            selectedCurrency = toCurrency,
+            searchQuery = searchQuery,
+            onSearchChange = { searchQuery = it },
+            onCurrencySelect = {
+                toCurrency = it
+                showToPicker = false
+                searchQuery = ""
+            },
+            onDismiss = {
+                showToPicker = false
+                searchQuery = ""
+            }
+        )
     }
 }
 
@@ -590,10 +587,7 @@ private fun CurrencyPickerDialog(
         }
     }
 
-    Dialog(
-        onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
-    ) {
+    FixedSizeDialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Card(
             modifier = Modifier
                 .fillMaxWidth(0.9f)
@@ -739,4 +733,6 @@ private fun CurrencyListItem(
         }
     }
 }
+
+
 

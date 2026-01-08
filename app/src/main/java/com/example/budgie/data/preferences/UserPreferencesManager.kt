@@ -88,6 +88,13 @@ class UserPreferencesManager(context: Context) {
         preferences.edit().putString(KEY_CURRENCY_SYMBOL, symbol).apply()
     }
 
+    // ========== AUTO-LOCK SETTINGS ==========
+
+    fun getAutoLockEnabled(): Boolean = preferences.getBoolean(KEY_AUTO_LOCK_ENABLED, true)
+    fun setAutoLockEnabled(enabled: Boolean) {
+        preferences.edit().putBoolean(KEY_AUTO_LOCK_ENABLED, enabled).apply()
+    }
+
     // ========== CLEAR ALL PREFERENCES ==========
 
     fun clearAllPreferences() {
@@ -115,6 +122,7 @@ class UserPreferencesManager(context: Context) {
         private const val KEY_BILL_REMINDERS = "bill_reminders_enabled"
         private const val KEY_DAILY_INSIGHTS = "daily_insights_enabled"
         private const val KEY_CURRENCY_SYMBOL = "currency_symbol"
+        private const val KEY_AUTO_LOCK_ENABLED = "auto_lock_enabled"
 
         @Volatile
         private var INSTANCE: UserPreferencesManager? = null

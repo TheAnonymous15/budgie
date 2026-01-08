@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.budgie.R
+import com.example.budgie.ui.components.FixedSizeDialog
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -74,8 +75,12 @@ fun ResponsiveFloatingButtons(
     onShowIncomeDialog: () -> Unit,
     onAddExpense: () -> Unit,
     onNavigateToBills: () -> Unit,
-    onNavigateToShoppingList: () -> Unit,
-    onNavigateToExport: () -> Unit = {}
+    onNavigateToGoals: () -> Unit = {},
+    onNavigateToAnalytics: () -> Unit = {},
+    onNavigateToShoppingList: () -> Unit = {},
+    onNavigateToExport: () -> Unit = {},
+    onNavigateToSettings: () -> Unit = {},
+    onNavigateToNotifications: () -> Unit = {}
 ) {
     // Animation states
     val infiniteTransition = rememberInfiniteTransition(label = "fab_glow")
@@ -123,9 +128,9 @@ fun ResponsiveFloatingButtons(
                 color = FabGlowCyan
             ),
             FabMenuItem(
-                id = "shopping",
-                label = "Shopping List",
-                icon = Icons.Default.ShoppingCart,
+                id = "goals",
+                label = "Financial Goals",
+                icon = Icons.Default.Flag,
                 color = FabGlowPurple
             ),
             FabMenuItem(
@@ -133,6 +138,24 @@ fun ResponsiveFloatingButtons(
                 label = "Export Data",
                 icon = Icons.Default.FileUpload,
                 color = FabGlowOrange
+            ),
+            FabMenuItem(
+                id = "analytics",
+                label = "Statistics & Analysis",
+                icon = Icons.Default.Analytics,
+                color = Color(0xFFFFD93D) // Gold color for analytics
+            ),
+            FabMenuItem(
+                id = "notifications",
+                label = "Notifications",
+                icon = Icons.Default.Notifications,
+                color = Color(0xFFFF6B6B) // Red color for notifications
+            ),
+            FabMenuItem(
+                id = "settings",
+                label = "Settings",
+                icon = Icons.Default.Settings,
+                color = Color(0xFF9B59B6) // Purple color for settings
             ),
             FabMenuItem(
                 id = "ai",
@@ -147,14 +170,11 @@ fun ResponsiveFloatingButtons(
     // CENTERED RADIAL MENU DIALOG
     // ═══════════════════════════════════════════════════════════════════
     if (fabExpanded) {
-        Dialog(
-            onDismissRequest = { onFabExpandedChange(false) },
-            properties = DialogProperties(
-                dismissOnBackPress = true,
-                dismissOnClickOutside = true,
-                usePlatformDefaultWidth = false
-            )
-        ) {
+        FixedSizeDialog(onDismissRequest = { onFabExpandedChange(false) }, properties = DialogProperties(
+            dismissOnBackPress = true,
+            dismissOnClickOutside = true,
+            usePlatformDefaultWidth = false
+        )) {
             CenteredRadialMenu(
                 menuItems = menuItems,
                 glowPulse = glowPulse,
@@ -166,8 +186,11 @@ fun ResponsiveFloatingButtons(
                         "income" -> onShowIncomeDialog()
                         "expense" -> onAddExpense()
                         "bills" -> onNavigateToBills()
-                        "shopping" -> onNavigateToShoppingList()
+                        "goals" -> onNavigateToGoals()
+                        "analytics" -> onNavigateToAnalytics()
                         "export" -> onNavigateToExport()
+                        "notifications" -> onNavigateToNotifications()
+                        "settings" -> onNavigateToSettings()
                         "ai" -> onNavigateToAIChat()
                     }
                 }

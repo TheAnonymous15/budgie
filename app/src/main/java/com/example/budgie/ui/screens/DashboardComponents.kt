@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -277,7 +278,7 @@ fun OrbitingParticles(
     }
 }
 
-// ==================== PREMIUM METRIC CARD ====================
+// ==================== PREMIUM METRIC CARD - ENHANCED ====================
 @Composable
 fun PremiumMetricCard(
     title: String,
@@ -285,36 +286,94 @@ fun PremiumMetricCard(
     icon: ImageVector,
     accentColor: Color,
     hasData: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    trend: Float? = null, // Positive/negative percentage
+    showSparkline: Boolean = false
 ) {
     val infiniteTransition = rememberInfiniteTransition(label = "metric")
+
+    // Enhanced glow animation
     val glowAlpha by infiniteTransition.animateFloat(
-        initialValue = 0.2f,
-        targetValue = 0.4f,
+        initialValue = 0.15f,
+        targetValue = 0.45f,
         animationSpec = infiniteRepeatable(
-            animation = tween(2000, easing = EaseInOutCubic),
+            animation = tween(2500, easing = EaseInOutCubic),
             repeatMode = RepeatMode.Reverse
         ),
         label = "glow"
     )
 
+    // Shimmer effect
+    val shimmerOffset by infiniteTransition.animateFloat(
+        initialValue = -400f,
+        targetValue = 400f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(3000, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart
+        ),
+        label = "shimmer"
+    )
+
+    // Icon rotation
+    val iconRotation by infiniteTransition.animateFloat(
+        initialValue = -2f,
+        targetValue = 2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(2000, easing = EaseInOutSine),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "iconRotation"
+    )
+
+    var isPressed by remember { mutableStateOf(false) }
+    val cardScale by animateFloatAsState(
+        targetValue = if (isPressed) 0.97f else 1f,
+        animationSpec = spring(dampingRatio = 0.6f, stiffness = 300f),
+        label = "cardScale"
+    )
+
     Box(
         modifier = modifier
-            .ultraGlassCard(accentColor, 20, if (hasData) glowAlpha else 0.1f)
+            .scale(cardScale)
+            .ultraGlassCard(accentColor, 20, if (hasData) glowAlpha else 0.08f)
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = { isPressed = !isPressed }
+            )
     ) {
-        // Background shimmer effect
+        // Multi-layer background effects
         if (hasData) {
+            // Radial gradient base
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
                         brush = Brush.radialGradient(
                             colors = listOf(
-                                accentColor.copy(alpha = 0.08f),
+                                accentColor.copy(alpha = 0.12f),
+                                accentColor.copy(alpha = 0.04f),
                                 Color.Transparent
                             ),
-                            center = Offset(100f, 50f),
-                            radius = 200f
+                            center = Offset(200f, 100f),
+                            radius = 300f
+                        )
+                    )
+            )
+
+            // Animated shimmer overlay
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        brush = Brush.linearGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color.White.copy(alpha = 0.03f),
+                                Color.Transparent
+                            ),
+                            start = Offset(shimmerOffset, 0f),
+                            end = Offset(shimmerOffset + 200f, 200f)
                         )
                     )
             )
@@ -323,99 +382,218 @@ fun PremiumMetricCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .padding(18.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                // Title with subtle glow
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = DashboardSoftWhite.copy(alpha = 0.85f),
-                    fontWeight = FontWeight.SemiBold,
-                    letterSpacing = 0.5.sp
-                )
+                // Enhanced title with badge
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Text(
+                        text = title.uppercase(),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = DashboardSoftWhite.copy(alpha = 0.7f),
+                        fontWeight = FontWeight.Bold,
+                        letterSpacing = 1.2.sp,
+                        fontSize = 11.sp
+                    )
+                    // Subtle underline
+                    Box(
+                        modifier = Modifier
+                            .width(24.dp)
+                            .height(2.dp)
+                            .clip(RoundedCornerShape(1.dp))
+                            .background(accentColor.copy(alpha = 0.5f))
+                    )
+                }
 
-                // Animated Icon Container
+                // Enhanced animated icon container with rotation
                 Box(
                     modifier = Modifier
-                        .size(38.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .size(42.dp)
+                        .shadow(
+                            elevation = 12.dp,
+                            shape = RoundedCornerShape(14.dp),
+                            ambientColor = accentColor.copy(alpha = 0.4f),
+                            spotColor = accentColor.copy(alpha = 0.3f)
+                        )
+                        .clip(RoundedCornerShape(14.dp))
                         .background(
                             brush = Brush.linearGradient(
                                 colors = listOf(
-                                    accentColor.copy(alpha = 0.3f),
-                                    accentColor.copy(alpha = 0.15f)
-                                )
+                                    accentColor.copy(alpha = 0.35f),
+                                    accentColor.copy(alpha = 0.18f),
+                                    accentColor.copy(alpha = 0.12f)
+                                ),
+                                start = Offset.Zero,
+                                end = Offset.Infinite
                             )
                         )
                         .border(
-                            width = 1.dp,
-                            color = accentColor.copy(alpha = 0.4f),
-                            shape = RoundedCornerShape(12.dp)
+                            width = 1.5.dp,
+                            brush = Brush.linearGradient(
+                                colors = listOf(
+                                    accentColor.copy(alpha = 0.6f),
+                                    accentColor.copy(alpha = 0.2f)
+                                )
+                            ),
+                            shape = RoundedCornerShape(14.dp)
                         ),
                     contentAlignment = Alignment.Center
                 ) {
+                    // Pulsing glow background
+                    Box(
+                        modifier = Modifier
+                            .size(30.dp)
+                            .background(
+                                brush = Brush.radialGradient(
+                                    colors = listOf(
+                                        accentColor.copy(alpha = glowAlpha * 0.5f),
+                                        Color.Transparent
+                                    )
+                                )
+                            )
+                    )
+
                     Icon(
                         imageVector = icon,
                         contentDescription = null,
                         tint = accentColor,
-                        modifier = Modifier.size(20.dp)
+                        modifier = Modifier
+                            .size(22.dp)
+                            .graphicsLayer(rotationZ = iconRotation)
                     )
                 }
             }
 
-            Spacer(modifier = Modifier.height(14.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             if (hasData) {
-                // Amount with premium styling
-                Text(
-                    text = formatCurrency(amount),
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = (-0.5).sp
-                    ),
-                    color = accentColor
-                )
+                // Amount with enhanced styling
+                Row(
+                    verticalAlignment = Alignment.Bottom,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = formatCurrency(amount),
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            fontWeight = FontWeight.ExtraBold,
+                            letterSpacing = (-0.8).sp
+                        ),
+                        color = accentColor,
+                        modifier = Modifier.weight(1f)
+                    )
 
-                // Subtle indicator line
-                Spacer(modifier = Modifier.height(8.dp))
+                    // Trend indicator
+                    if (trend != null) {
+                        val trendColor = if (trend >= 0) DashboardEmerald else DashboardMutedRed
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(trendColor.copy(alpha = 0.15f))
+                                .padding(horizontal = 8.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = "${if (trend >= 0) "+" else ""}${String.format("%.1f", trend)}%",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = trendColor,
+                                fontSize = 10.sp
+                            )
+                        }
+                    }
+                }
+
+                // Enhanced indicator line with gradient
+                Spacer(modifier = Modifier.height(10.dp))
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(0.4f)
-                        .height(3.dp)
+                        .fillMaxWidth(0.5f)
+                        .height(4.dp)
                         .clip(RoundedCornerShape(2.dp))
                         .background(
                             brush = Brush.horizontalGradient(
                                 colors = listOf(
-                                    accentColor,
-                                    accentColor.copy(alpha = 0.3f)
+                                    accentColor.copy(alpha = 0.9f),
+                                    accentColor.copy(alpha = 0.5f),
+                                    accentColor.copy(alpha = 0.2f),
+                                    Color.Transparent
                                 )
                             )
                         )
                 )
+
+                // Mini sparkline (optional)
+                if (showSparkline) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    MiniSparkline(accentColor = accentColor)
+                }
             } else {
-                // Empty state with style
+                // Enhanced empty state
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
+                    // Animated pulsing dot
                     Box(
                         modifier = Modifier
-                            .size(8.dp)
+                            .size(10.dp)
                             .clip(CircleShape)
-                            .background(DashboardSoftWhite.copy(alpha = 0.3f))
+                            .background(
+                                brush = Brush.radialGradient(
+                                    colors = listOf(
+                                        DashboardSoftWhite.copy(alpha = glowAlpha * 0.6f),
+                                        DashboardSoftWhite.copy(alpha = 0.2f)
+                                    )
+                                )
+                            )
                     )
                     Text(
-                        text = "No data yet",
+                        text = "Awaiting data",
                         style = MaterialTheme.typography.bodyMedium,
                         fontWeight = FontWeight.Medium,
-                        color = DashboardSoftWhite.copy(alpha = 0.4f)
+                        color = DashboardSoftWhite.copy(alpha = 0.5f),
+                        letterSpacing = 0.3.sp
                     )
                 }
+            }
+        }
+    }
+}
+
+// Mini sparkline component
+@Composable
+private fun MiniSparkline(
+    accentColor: Color,
+    modifier: Modifier = Modifier
+) {
+    // Sample data points (in real app, pass actual data)
+    val dataPoints = remember { listOf(0.3f, 0.5f, 0.4f, 0.7f, 0.6f, 0.8f, 0.9f) }
+
+    Canvas(
+        modifier = modifier
+            .fillMaxWidth(0.5f)
+            .height(20.dp)
+    ) {
+        val width = size.width
+        val height = size.height
+        val stepX = width / (dataPoints.size - 1)
+
+        dataPoints.forEachIndexed { index, value ->
+            if (index < dataPoints.size - 1) {
+                val x1 = index * stepX
+                val y1 = height * (1 - value)
+                val x2 = (index + 1) * stepX
+                val y2 = height * (1 - dataPoints[index + 1])
+
+                drawLine(
+                    color = accentColor.copy(alpha = 0.6f),
+                    start = Offset(x1, y1),
+                    end = Offset(x2, y2),
+                    strokeWidth = 2.dp.toPx()
+                )
             }
         }
     }

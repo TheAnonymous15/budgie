@@ -1,11 +1,15 @@
 package com.example.budgie.ui.navigation
 
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -14,8 +18,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.budgie.data.model.UserProfile
 import com.example.budgie.data.preferences.UserPreferencesManager
+import com.example.budgie.security.InactivityTimer
 import com.example.budgie.security.SecurityManager
+import com.example.budgie.ui.components.AutoLockWarningDialog
 import com.example.budgie.ui.screens.*
+import com.example.budgie.ui.screens.dashboard.FuturisticDashboard
 import com.example.budgie.ui.viewmodel.MainViewModel
 import com.example.budgie.ui.viewmodel.ModelDownloadViewModel
 import java.util.Calendar
@@ -43,6 +50,53 @@ fun BudgieNavigation(
     var birthdayAge by remember { mutableStateOf(0) }
     var birthdayChecked by remember { mutableStateOf(false) }
     var showSplash by remember { mutableStateOf(true) }
+
+    // ===== INACTIVITY TIMER =====
+    var showAutoLockWarning by remember { mutableStateOf(false) }
+
+    val inactivityTimer = remember {
+        InactivityTimer(
+            onInactivityWarning = {
+                android.util.Log.d("InactivityTimer", "⚠️ Showing auto-lock warning")
+                showAutoLockWarning = true
+            },
+            onAutoLock = {
+                android.util.Log.d("InactivityTimer", "🔒 Auto-locking app")
+                showAutoLockWarning = false
+                securityManager.setAuthenticated(false)
+                isLocked = true
+            }
+        )
+    }
+
+    val countdownSeconds by inactivityTimer.countdownSeconds.collectAsStateWithLifecycle()
+
+    // Start/stop timer based on lock state AND auto-lock preference
+    LaunchedEffect(isLocked) {
+        val autoLockEnabled = preferencesManager.getAutoLockEnabled()
+        val hasSecurityEnabled = securityType != SecurityManager.SECURITY_NONE
+
+        if (!isLocked && hasSecurityEnabled && autoLockEnabled) {
+            android.util.Log.d("InactivityTimer", "▶️ Starting inactivity timer (user authenticated, auto-lock enabled)")
+            inactivityTimer.start()
+        } else {
+            if (!autoLockEnabled) {
+                android.util.Log.d("InactivityTimer", "🛑 Auto-lock disabled by user - timer stopped")
+            } else {
+                android.util.Log.d("InactivityTimer", "🛑 Stopping inactivity timer (user locked/no security)")
+            }
+            inactivityTimer.stop()
+            showAutoLockWarning = false
+        }
+    }
+
+    // Cleanup timer on dispose
+    DisposableEffect(Unit) {
+        onDispose {
+            inactivityTimer.cleanup()
+        }
+    }
+    // ===== END INACTIVITY TIMER =====
 
     // Log initial state
     android.util.Log.d("BudgieNav", "showSplash=$showSplash, userProfile=${userProfile?.name}, birthdayChecked=$birthdayChecked")
@@ -128,9 +182,16 @@ fun BudgieNavigation(
             Screen.Dashboard.route
         }
 
+        // Detect user interaction to reset inactivity timer
         NavHost(
             navController = navController,
-            startDestination = startDestination
+            startDestination = startDestination,
+            modifier = Modifier.pointerInput(Unit) {
+                detectTapGestures {
+                    // Reset timer on any tap/interaction
+                    inactivityTimer.resetTimer()
+                }
+            }
         ) {
             composable(Screen.Onboarding.route) {
                 OnboardingScreen(
@@ -158,43 +219,39 @@ fun BudgieNavigation(
             }
 
             composable(Screen.Dashboard.route) {
-            DashboardScreen(
-                viewModel = viewModel,
-                userName = userProfile?.name,
-                onNavigateToExpenses = { navController.navigate(Screen.Expenses.route) },
-                onNavigateToIncome = { navController.navigate(Screen.Income.route) },
-                onNavigateToBills = { navController.navigate(Screen.Bills.route) },
-                onNavigateToBudget = { navController.navigate(Screen.Budget.route) },
-                onNavigateToInsights = { navController.navigate(Screen.Insights.route) },
-                onNavigateToInvestments = { navController.navigate(Screen.Investments.route) },
-                onNavigateToWealthProjection = { navController.navigate(Screen.WealthProjection.route) },
-                onNavigateToExport = { navController.navigate(Screen.Export.route) },
-                onNavigateToGoals = { navController.navigate(Screen.Goals.route) },
-                onNavigateToLoans = { navController.navigate(Screen.Loans.route) },
-                onNavigateToShoppingList = { navController.navigate(Screen.ShoppingList.route) },
-                onNavigateToAIChat = { navController.navigate(Screen.AIChat.route) },
-                onNavigateToNotifications = { navController.navigate(Screen.Notifications.route) },
-                onAddExpense = { navController.navigate(Screen.AddExpense.route) },
-                onAddIncome = { navController.navigate(Screen.AddIncome.route) },
-                // Menu navigation
-                onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
-                onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
-                onNavigateToSecurity = { navController.navigate(Screen.Security.route) },
-                onNavigateToHelp = { navController.navigate(Screen.Help.route) },
-                onNavigateToAbout = { navController.navigate(Screen.About.route) },
-                // Logout - go back to lock screen
-                onLogout = {
-                    securityManager.setAuthenticated(false)
-                    isLocked = true
-                },
-                // Exit - close the app
-                onExit = {
-                    (context as? android.app.Activity)?.finishAffinity()
-                },
-                // Model download
-                modelDownloadViewModel = modelDownloadViewModel
-            )
-        }
+                FuturisticDashboard(
+                    viewModel = viewModel,
+                    userName = userProfile?.name,
+                    onNavigateToExpenses = { navController.navigate(Screen.Expenses.route) },
+                    onNavigateToIncome = { navController.navigate(Screen.Income.route) },
+                    onNavigateToBills = { navController.navigate(Screen.Bills.route) },
+                    onNavigateToBudget = { navController.navigate(Screen.Budget.route) },
+                    onNavigateToInsights = { navController.navigate(Screen.Insights.route) },
+                    onNavigateToGoals = { navController.navigate(Screen.Goals.route) },
+                    onNavigateToLoans = { navController.navigate(Screen.Loans.route) },
+                    onNavigateToShoppingList = { navController.navigate(Screen.ShoppingList.route) },
+                    onNavigateToAIChat = { navController.navigate(Screen.AIChat.route) },
+                    onNavigateToExport = { navController.navigate(Screen.Export.route) },
+                    onNavigateToNotifications = { navController.navigate(Screen.Notifications.route) },
+                    onAddExpense = { navController.navigate(Screen.AddExpense.route) },
+                    onAddIncome = { navController.navigate(Screen.AddIncome.route) },
+                    // Menu navigation
+                    onNavigateToProfile = { navController.navigate(Screen.Profile.route) },
+                    onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
+                    onNavigateToSecurity = { navController.navigate(Screen.Security.route) },
+                    // Logout - go back to lock screen
+                    onLogout = {
+                        securityManager.setAuthenticated(false)
+                        isLocked = true
+                    },
+                    // Exit - close the app
+                    onExit = {
+                        (context as? android.app.Activity)?.finishAffinity()
+                    },
+                    // Model download
+                    modelDownloadViewModel = modelDownloadViewModel
+                )
+            }
 
         composable(Screen.Expenses.route) {
             ExpensesScreen(
@@ -423,6 +480,21 @@ fun BudgieNavigation(
                 onBack = { navController.popBackStack() }
             )
         }
+        }
+
+        // Show auto-lock warning dialog when inactivity detected
+        if (showAutoLockWarning) {
+            AutoLockWarningDialog(
+                countdownSeconds = countdownSeconds,
+                onStayActive = {
+                    inactivityTimer.cancelAutoLock()
+                    showAutoLockWarning = false
+                },
+                onLockNow = {
+                    inactivityTimer.lockNow()
+                    showAutoLockWarning = false
+                }
+            )
         }
     }
 }

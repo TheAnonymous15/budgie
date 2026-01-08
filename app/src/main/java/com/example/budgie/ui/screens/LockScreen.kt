@@ -183,14 +183,20 @@ fun LockScreen(
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
-                    colors = listOf(DeepNavy, MidnightNavy, Navy),
+                    colors = listOf(
+                        DeepNavy,           // Deep authority navy at top
+                        MidnightNavy,       // Rich midnight blue
+                        Navy,               // Dark wealth navy
+                        NavyLight,          // Subtle light accent at bottom
+                        Navy                // Back to dark for depth
+                    ),
                     startY = 0f,
                     endY = Float.POSITIVE_INFINITY
                 )
             ),
         contentAlignment = Alignment.Center
     ) {
-        // Animated background
+        // Animated background with holographic effects
         PremiumBackground(
             particleDrift = particleDrift,
             glowIntensity = glowIntensity
@@ -219,28 +225,40 @@ fun LockScreen(
 
             Spacer(Modifier.height(dimens.aiStatusToCard))
 
-            // Main Lock Card
+            // Main Lock Card - Premium Glassmorphic Design
             Card(
                 modifier = Modifier
                     .widthIn(max = dimens.cardMaxWidth)
                     .border(
-                        width = 1.dp,
+                        width = 2.dp,
                         brush = Brush.linearGradient(
                             colors = listOf(
-                                SoftWhite.copy(alpha = 0.1f),
-                                Emerald.copy(alpha = 0.2f),
-                                SoftWhite.copy(alpha = 0.05f)
+                                Emerald.copy(alpha = 0.3f),      // Top emerald
+                                Gold.copy(alpha = 0.25f),         // Gold accent
+                                Emerald.copy(alpha = 0.15f),      // Mid emerald
+                                SoftWhite.copy(alpha = 0.1f),     // Subtle white
+                                Emerald.copy(alpha = 0.2f)        // Bottom emerald
                             )
                         ),
                         shape = RoundedCornerShape(dimens.cardCornerRadius)
                     ),
                 shape = RoundedCornerShape(dimens.cardCornerRadius),
                 colors = CardDefaults.cardColors(
-                    containerColor = Color.White.copy(alpha = 0.03f)
+                    containerColor = MidnightNavy.copy(alpha = 0.25f)  // Premium glassmorphic navy
                 )
             ) {
                 Column(
-                    modifier = Modifier.padding(dimens.cardPadding),
+                    modifier = Modifier
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.White.copy(alpha = 0.03f),
+                                    Color.Transparent,
+                                    Emerald.copy(alpha = 0.02f)
+                                )
+                            )
+                        )
+                        .padding(dimens.cardPadding),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     // Animated Security Shield

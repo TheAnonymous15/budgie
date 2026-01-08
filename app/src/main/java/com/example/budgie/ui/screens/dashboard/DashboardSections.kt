@@ -250,7 +250,8 @@ fun ResponsiveWealthTip(dimens: DashboardDimens) {
 @Composable
 fun ResponsiveInsightCard(
     dimens: DashboardDimens,
-    insight: SpendingInsight
+    insight: SpendingInsight,
+    onClick: () -> Unit = {}
 ) {
     val insightColor = when (insight.type) {
         InsightType.BUDGET_WARNING, InsightType.OVERSPENDING -> DashboardAmber
@@ -261,7 +262,8 @@ fun ResponsiveInsightCard(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = dimens.horizontalPadding),
+            .padding(horizontal = dimens.horizontalPadding)
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(dimens.cardCornerRadius),
         colors = CardDefaults.cardColors(
             containerColor = insightColor.copy(alpha = 0.08f)
@@ -310,6 +312,13 @@ fun ResponsiveInsightCard(
                     overflow = TextOverflow.Ellipsis
                 )
             }
+            // Expand Arrow
+            Icon(
+                Icons.Default.ChevronRight,
+                contentDescription = "View details",
+                tint = insightColor,
+                modifier = Modifier.size(20.dp)
+            )
         }
     }
 }
@@ -338,7 +347,7 @@ fun ResponsiveExpenseItem(
                 .padding(dimens.itemCardPadding),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Category Icon
+            // Category Icon with pulse effect
             Box(
                 modifier = Modifier
                     .size(dimens.itemIconSize)
@@ -358,14 +367,24 @@ fun ResponsiveExpenseItem(
 
             // Details
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    expense.title,
-                    fontSize = dimens.itemTitleSize.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = DashboardSoftWhite,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        expense.title,
+                        fontSize = dimens.itemTitleSize.sp,
+                        fontWeight = FontWeight.Medium,
+                        color = DashboardSoftWhite,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Icon(
+                        Icons.Default.TouchApp,
+                        contentDescription = "Tap for details",
+                        tint = DashboardEmerald.copy(alpha = 0.5f),
+                        modifier = Modifier.size(14.dp)
+                    )
+                }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(6.dp)

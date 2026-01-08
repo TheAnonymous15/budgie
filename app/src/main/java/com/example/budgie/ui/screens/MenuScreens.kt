@@ -754,7 +754,7 @@ fun SettingsScreen(
                 SettingsSectionHeader(
                     icon = Icons.Default.Notifications,
                     title = "Notifications",
-                    color = MenuAmber
+                    color = MenuEmerald
                 )
             }
 
@@ -1034,11 +1034,14 @@ fun SecuritySettingsScreen(
     onBack: () -> Unit,
     onNavigateToBiometricDiagnostics: () -> Unit = {}
 ) {
+    val context = LocalContext.current
+    val preferencesManager = remember { UserPreferencesManager.getInstance(context) }
+
     var currentSecurityType by remember { mutableStateOf(securityManager.getSecurityType()) }
     var showChangePinDialog by remember { mutableStateOf(false) }
     var showDisableBiometricDialog by remember { mutableStateOf(false) }
     var showDisableAutoLockDialog by remember { mutableStateOf(false) }
-    var autoLockEnabled by remember { mutableStateOf(securityManager.isAutoLockEnabled()) }
+    var autoLockEnabled by remember { mutableStateOf(preferencesManager.getAutoLockEnabled()) }
     var currentPin by remember { mutableStateOf("") }
     var newPin by remember { mutableStateOf("") }
     var confirmPin by remember { mutableStateOf("") }
@@ -1134,7 +1137,7 @@ fun SecuritySettingsScreen(
                 Button(
                     onClick = {
                         autoLockEnabled = false
-                        securityManager.setAutoLockEnabled(false)
+                        preferencesManager.setAutoLockEnabled(false)
                         showDisableAutoLockDialog = false
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = MenuMutedRed)
@@ -1401,7 +1404,7 @@ fun SecuritySettingsScreen(
                             onCheckedChange = { enabled ->
                                 if (enabled) {
                                     autoLockEnabled = true
-                                    securityManager.setAutoLockEnabled(true)
+                                    preferencesManager.setAutoLockEnabled(true)
                                 } else {
                                     // Show confirmation dialog when disabling
                                     showDisableAutoLockDialog = true
